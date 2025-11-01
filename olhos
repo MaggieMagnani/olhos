@@ -1,7 +1,6 @@
--- ...existing code...
 -- =============================================
--- OLHO PSICODÉLICO PARA BALADA NO MINECRAFT (versão: olho redondo, sem piscada)
--- ComputerCraft - Programa Completo
+-- OLHO PSICODÉLICO REDONDO PARA BALADA
+-- ComputerCraft - Versão Redonda
 -- =============================================
 
 -- Encontra e configura o monitor
@@ -16,25 +15,28 @@ local width, height = monitor.getSize()
 
 -- Cores psicodélicas disponíveis
 local psychedelicColors = {
-    colors.red, colors.orange, colors.yellow,
-    colors.green, colors.lime, colors.blue,
-    colors.purple, colors.pink, colors.magenta,
+    colors.red, colors.orange, colors.yellow, 
+    colors.green, colors.lime, colors.blue, 
+    colors.purple, colors.pink, colors.magenta, 
     colors.cyan, colors.white
 }
 
 -- Função para cor aleatória
-local function getRandomColor()
+function getRandomColor()
     return psychedelicColors[math.random(1, #psychedelicColors)]
 end
 
--- Função para desenhar olho redondo (sclera circular)
-local function drawRoundEye(cx, cy, radius)
-    monitor.setBackgroundColor(colors.white)
+-- Função para desenhar círculo perfeito (olho redondo)
+function drawRoundEye(cx, cy, radius, bgColor)
+    monitor.setBackgroundColor(bgColor)
+    
     for y = -radius, radius do
         for x = -radius, radius do
+            -- Fórmula do círculo: x² + y² <= r²
             if x*x + y*y <= radius*radius then
                 local screenX = cx + x
                 local screenY = cy + y
+                
                 if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
                     monitor.setCursorPos(screenX, screenY)
                     monitor.write(" ")
@@ -44,21 +46,19 @@ local function drawRoundEye(cx, cy, radius)
     end
 end
 
--- Função para desenhar íris e pupila (escala relativa ao tamanho da tela)
-local function drawIris(cx, cy, color, pupilSize, offsetX, offsetY, scleraRadius)
-    local irisRadius = math.max(1, math.floor(scleraRadius * 0.45))
-    local pupilRadius = math.max(1, math.floor(irisRadius * pupilSize))
-
+-- Função para desenhar íris e pupila redondas
+function drawIrisRound(cx, cy, irisRadius, pupilRadius, color, offsetX, offsetY)
     local irisX = cx + offsetX
     local irisY = cy + offsetY
-
-    -- Desenha íris
+    
+    -- Desenha íris (círculo colorido)
     monitor.setBackgroundColor(color)
     for y = -irisRadius, irisRadius do
         for x = -irisRadius, irisRadius do
             if x*x + y*y <= irisRadius*irisRadius then
                 local screenX = irisX + x
                 local screenY = irisY + y
+                
                 if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
                     monitor.setCursorPos(screenX, screenY)
                     monitor.write(" ")
@@ -66,14 +66,15 @@ local function drawIris(cx, cy, color, pupilSize, offsetX, offsetY, scleraRadius
             end
         end
     end
-
-    -- Desenha pupila
+    
+    -- Desenha pupila (círculo preto)
     monitor.setBackgroundColor(colors.black)
     for y = -pupilRadius, pupilRadius do
         for x = -pupilRadius, pupilRadius do
             if x*x + y*y <= pupilRadius*pupilRadius then
                 local screenX = irisX + x
                 local screenY = irisY + y
+                
                 if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
                     monitor.setCursorPos(screenX, screenY)
                     monitor.write(" ")
@@ -83,57 +84,86 @@ local function drawIris(cx, cy, color, pupilSize, offsetX, offsetY, scleraRadius
     end
 end
 
--- Movimento suave do olho
-local function getEyeMovement()
+-- Função para movimento em múltiplas velocidades
+function getEyeMovement()
     local time = os.clock()
-    local moveX = math.floor(math.sin(time * 1.7) * width * 0.08)
-    local moveY = math.floor(math.cos(time * 1.3) * height * 0.08)
-    return moveX, moveY
+    
+    -- Três movimentos diferentes com velocidades variadas
+    local moveX1 = math.sin(time * 0.8) * width * 0.1   -- Movimento lento
+    local moveY1 = math.cos(time * 0.8) * height * 0.1
+    
+    local moveX2 = math.sin(time * 2.2) * width * 0.05  -- Movimento médio
+    local moveY2 = math.cos(time * 1.7) * height * 0.05
+    
+    local moveX3 = math.sin(time * 4.5) * width * 0.02  -- Movimento rápido
+    local moveY3 = math.cos(time * 3.9) * height * 0.02
+    
+    -- Combina os movimentos
+    local totalX = moveX1 + moveX2 + moveX3
+    local totalY = moveY1 + moveY2 + moveY3
+    
+    -- Limita o movimento para não sair do olho
+    totalX = math.max(-width * 0.2, math.min(width * 0.2, totalX))
+    totalY = math.max(-height * 0.2, math.min(height * 0.2, totalY))
+    
+    return math.floor(totalX), math.floor(totalY)
 end
 
--- Função principal para desenhar o olho completo (sem piscada)
-local function drawEye(irisColor, pupilSize, offsetX, offsetY)
-    -- fundo do frame
+-- Função principal para desenhar o olho completo
+function drawRoundEyeComplete(irisColor, offsetX, offsetY)
+    -- Limpa o monitor com fundo preto (contorno)
     monitor.setBackgroundColor(colors.black)
     monitor.clear()
-
+    
     local centerX = math.floor(width / 2)
     local centerY = math.floor(height / 2)
-    local scleraRadius = math.max(2, math.floor(math.min(width, height) * 0.45))
-
-    drawRoundEye(centerX, centerY, scleraRadius)
-    drawIris(centerX, centerY, irisColor, pupilSize, offsetX, offsetY, scleraRadius)
+    
+    -- Tamanhos proporcionais ao monitor
+    local eyeRadius = math.floor(math.min(width, height) * 0.4)  -- 40% do menor lado
+    local irisRadius = math.floor(eyeRadius * 0.6)               -- 60% do olho
+    local pupilRadius = math.floor(irisRadius * 0.4)             -- 40% da íris
+    
+    -- Desenha olho branco (esclera)
+    drawRoundEye(centerX, centerY, eyeRadius, colors.white)
+    
+    -- Desenha íris e pupila com movimento
+    drawIrisRound(centerX, centerY, irisRadius, pupilRadius, irisColor, offsetX, offsetY)
+    
+    -- Desenha contorno preto ao redor do olho
+    drawRoundEye(centerX, centerY, eyeRadius, colors.black)
+    drawRoundEye(centerX, centerY, eyeRadius - 1, colors.white)  -- Borda interna
 end
 
--- Loop principal do programa (SEM PISCADA)
-local function main()
+-- Loop principal do programa
+function main()
     local colorChangeTimer = 0
     local currentColor = colors.blue
-
-    print("Iniciando Olho Psicodélico (redondo, sem piscada)...")
+    local movementChangeTimer = 0
+    
+    print("Iniciando Olho Redondo Psicodélico...")
     print("Tamanho do monitor: " .. width .. "x" .. height)
-
+    print("Olho formatado como círculo perfeito")
+    
     while true do
         local currentTime = os.clock()
-
+        
         -- Muda cor a cada 1.5 segundos
         if currentTime - colorChangeTimer > 1.5 then
             currentColor = getRandomColor()
             colorChangeTimer = currentTime
         end
-
-        -- Movimento do olho
+        
+        -- Movimento do olho (sempre ativo, sem piscar)
         local moveX, moveY = getEyeMovement()
-
-        -- Desenha o olho (sempre aberto)
-        drawEye(currentColor, 0.4, moveX, moveY)
-
+        
+        -- Desenha o olho redondo completo
+        drawRoundEyeComplete(currentColor, moveX, moveY)
+        
+        -- Pequena pausa para animação suave
         os.sleep(0.05)
     end
 end
 
 -- Inicialização
-math.randomseed(os.time() or os.clock())
-math.random(); math.random()
+math.randomseed(os.clock())
 main()
--- ...existing code...
