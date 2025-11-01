@@ -1,0 +1,27 @@
+-- Salve como teste_telas.lua
+print("=== TESTE DE MÚLTIPLAS TELAS ===")
+
+-- Encontra todos os monitores
+local monitores = {peripheral.find("monitor")}
+
+-- Ajusta se encontrar apenas um
+if not monitores[1] then
+    monitores = {monitores}
+end
+
+print("Monitores encontrados: " .. #monitores)
+
+-- Mostra info de cada monitor
+for i, mon in ipairs(monitores) do
+    local w, h = mon.getSize()
+    print("Monitor " .. i .. ": " .. w .. "x" .. h)
+    
+    -- Escreve em cada monitor
+    mon.setTextScale(1)
+    mon.setBackgroundColor(colors.black)
+    mon.clear()
+    mon.setCursorPos(1, 1)
+    mon.write("TELA " .. i)
+end
+
+print("Teste concluído!")
