@@ -1,0 +1,183 @@
+-- =============================================
+-- ONDA DE CORES PSICODÉLICA - TELAS SEQUENCIAIS
+-- =============================================
+
+print("=== INICIANDO ONDA DE CORES ===")
+
+-- Encontra todos os monitores
+local monitores = {peripheral.find("monitor")}
+if not monitores[1] then
+    monitores = {monitores}
+end
+
+print("Monitores conectados: " .. #monitores)
+
+-- Configura todos os monitores
+for i, mon in ipairs(monitores) do
+    mon.setTextScale(0.5)
+end
+
+-- Cores psicodélicas para a sequência
+local cores = {
+    colors.red,
+    colors.orange, 
+    colors.yellow,
+    colors.green,
+    colors.blue,
+    colors.purple,
+    colors.pink,
+    colors.cyan,
+    colors.white,
+    colors.magenta
+}
+
+-- Função para piscar uma tela específica
+function piscarTela(numeroTela, cor)
+    local mon = monitores[numeroTela]
+    if mon then
+        local w, h = mon.getSize()
+        
+        -- Pisca a tela inteira com a cor
+        mon.setBackgroundColor(cor)
+        mon.clear()
+        
+        -- Mostra qual tela é
+        mon.setTextColor(colors.black)
+        mon.setCursorPos(2, math.floor(h/2))
+        mon.write("TELA " .. numeroTela)
+        
+        print("Tela " .. numeroTela .. " piscou: " .. cor)
+    end
+end
+
+-- Função para resetar todas as telas
+function resetarTelas()
+    for i, mon in ipairs(monitores) do
+        mon.setBackgroundColor(colors.black)
+        mon.clear()
+        mon.setTextColor(colors.white)
+        mon.setCursorPos(1, 1)
+        mon.write("TELA " .. i)
+    end
+end
+
+-- Sequência de onda através das telas
+function ondaDeCores()
+    local sequencia = 1
+    
+    while true do
+        print("=== SEQUÊNCIA " .. sequencia .. " ===")
+        
+        -- Pisca cada tela em sequência com cores diferentes
+        for i = 1, #monitores do
+            local cor = cores[(sequencia + i - 2) % #cores + 1]
+            
+            -- Pisca esta tela
+            piscarTela(i, cor)
+            
+            -- Pequena pausa entre as telas (efeito de onda)
+            os.sleep(0.3)
+        end
+        
+        -- Pausa antes de reiniciar
+        os.sleep(0.5)
+        
+        -- Reset para próxima sequência
+        resetarTelas()
+        os.sleep(0.2)
+        
+        sequencia = sequencia + 1
+        
+        -- A cada 5 sequências, muda o padrão
+        if sequencia % 5 == 0 then
+            print("--- MUDANDO PADRÃO ---")
+            os.sleep(1)
+        end
+    end
+end
+
+-- Modo alternativo: todas piscam aleatoriamente
+function caosColorido()
+    print("=== MODO CAOS COLORIDO ===")
+    
+    while true do
+        -- Escolhe uma tela aleatória e uma cor aleatória
+        local telaAleatoria = math.random(1, #monitores)
+        local corAleatoria = cores[math.random(1, #cores)]
+        
+        -- Pisca a tela escolhida
+        piscarTela(telaAleatoria, corAleatoria)
+        
+        -- Pausa aleatória entre 0.1 e 0.5 segundos
+        os.sleep(math.random(10, 50) / 100)
+        
+        -- Reseta após breve momento
+        resetarTelas()
+        os.sleep(0.1)
+    end
+end
+
+-- Modo pulsante sincronizado
+function pulsarSincronizado()
+    print("=== MODO PULSAR SINCRONIZADO ===")
+    
+    local pulsos = 0
+    
+    while true do
+        pulsos = pulsos + 1
+        local corBase = cores[(pulsos - 1) % #cores + 1]
+        
+        print("Pulso " .. pulsos .. " - Cor: " .. corBase)
+        
+        -- Todas as telas piscam juntas
+        for i = 1, #monitores do
+            piscarTela(i, corBase)
+        end
+        
+        os.sleep(0.5)  -- Tempo ligado
+        resetarTelas() -- Reseta
+        os.sleep(0.3)  -- Tempo desligado
+        
+        -- Pausa maior a cada 10 pulsos
+        if pulsos % 10 == 0 then
+            os.sleep(1)
+        end
+    end
+end
+
+-- Menu principal
+function menu()
+    print("\n=== MENU ONDA DE CORES ===")
+    print("1. Onda Sequencial (padrão)")
+    print("2. Caos Colorido (aleatório)") 
+    print("3. Pulsar Sincronizado (todas juntas)")
+    print("4. Sair")
+    
+    write("Escolha um modo (1-4): ")
+    local escolha = read()
+    
+    resetarTelas()
+    
+    if escolha == "1" then
+        ondaDeCores()
+    elseif escolha == "2" then
+        caosColorido()
+    elseif escolha == "3" then
+        pulsarSincronizado()
+    elseif escolha == "4" then
+        print("Programa encerrado!")
+        return
+    else
+        print("Opção inválida! Tente novamente.")
+        os.sleep(1)
+        menu()
+    end
+end
+
+-- Inicialização
+print("Programa iniciado com " .. #monitores .. " telas")
+resetarTelas()
+os.sleep(1)
+
+-- Inicia o menu
+menu()
