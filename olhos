@@ -1,5 +1,6 @@
+-- ...existing code...
 -- =============================================
--- OLHO PSICODÉLICO PARA BALADA NO MINECRAFT
+-- OLHO PSICODÉLICO PARA BALADA NO MINECRAFT (versão: olho redondo, sem piscada)
 -- ComputerCraft - Programa Completo
 -- =============================================
 
@@ -15,46 +16,42 @@ local width, height = monitor.getSize()
 
 -- Cores psicodélicas disponíveis
 local psychedelicColors = {
-    colors.red, colors.orange, colors.yellow, 
-    colors.green, colors.lime, colors.blue, 
-    colors.purple, colors.pink, colors.magenta, 
+    colors.red, colors.orange, colors.yellow,
+    colors.green, colors.lime, colors.blue,
+    colors.purple, colors.pink, colors.magenta,
     colors.cyan, colors.white
 }
 
 -- Função para cor aleatória
-function getRandomColor()
+local function getRandomColor()
     return psychedelicColors[math.random(1, #psychedelicColors)]
 end
 
--- Função para desenhar olho amendoado
-function drawAlmondEye(cx, cy, w, h)
-    monitor.setBackgroundColor(colors.black)
-    
-    for y = -math.floor(h/2), math.floor(h/2) do
-        local yRatio = y / (h/2)
-        local xWidth = math.floor(w * math.sqrt(1 - yRatio*yRatio))
-        
-        for x = -math.floor(xWidth/2), math.floor(xWidth/2) do
-            local screenX = cx + x
-            local screenY = cy + y
-            
-            if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
-                monitor.setCursorPos(screenX, screenY)
-                monitor.write(" ")
+-- Função para desenhar olho redondo (sclera circular)
+local function drawRoundEye(cx, cy, radius)
+    monitor.setBackgroundColor(colors.white)
+    for y = -radius, radius do
+        for x = -radius, radius do
+            if x*x + y*y <= radius*radius then
+                local screenX = cx + x
+                local screenY = cy + y
+                if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
+                    monitor.setCursorPos(screenX, screenY)
+                    monitor.write(" ")
+                end
             end
         end
     end
 end
 
--- Função para desenhar íris e pupila
-function drawIris(cx, cy, color, pupilSize, offsetX, offsetY)
-    local irisRadius = math.floor(math.min(width, height) * 0.15)
-    local pupilRadius = math.floor(irisRadius * pupilSize)
-    
-    -- Aplica movimento à posição da íris
+-- Função para desenhar íris e pupila (escala relativa ao tamanho da tela)
+local function drawIris(cx, cy, color, pupilSize, offsetX, offsetY, scleraRadius)
+    local irisRadius = math.max(1, math.floor(scleraRadius * 0.45))
+    local pupilRadius = math.max(1, math.floor(irisRadius * pupilSize))
+
     local irisX = cx + offsetX
     local irisY = cy + offsetY
-    
+
     -- Desenha íris
     monitor.setBackgroundColor(color)
     for y = -irisRadius, irisRadius do
@@ -62,7 +59,6 @@ function drawIris(cx, cy, color, pupilSize, offsetX, offsetY)
             if x*x + y*y <= irisRadius*irisRadius then
                 local screenX = irisX + x
                 local screenY = irisY + y
-                
                 if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
                     monitor.setCursorPos(screenX, screenY)
                     monitor.write(" ")
@@ -70,7 +66,7 @@ function drawIris(cx, cy, color, pupilSize, offsetX, offsetY)
             end
         end
     end
-    
+
     -- Desenha pupila
     monitor.setBackgroundColor(colors.black)
     for y = -pupilRadius, pupilRadius do
@@ -78,7 +74,6 @@ function drawIris(cx, cy, color, pupilSize, offsetX, offsetY)
             if x*x + y*y <= pupilRadius*pupilRadius then
                 local screenX = irisX + x
                 local screenY = irisY + y
-                
                 if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
                     monitor.setCursorPos(screenX, screenY)
                     monitor.write(" ")
@@ -88,107 +83,57 @@ function drawIris(cx, cy, color, pupilSize, offsetX, offsetY)
     end
 end
 
--- Função para movimento suave do olho
-function getEyeMovement()
+-- Movimento suave do olho
+local function getEyeMovement()
     local time = os.clock()
-    
-    -- Movimento suave com múltiplas frequências
     local moveX = math.floor(math.sin(time * 1.7) * width * 0.08)
     local moveY = math.floor(math.cos(time * 1.3) * height * 0.08)
-    
     return moveX, moveY
 end
 
--- Função para fazer o olho piscar ocasionalmente
-function shouldBlink()
-    return math.random(1, 200) == 1  -- 0.5% de chance a cada frame
-end
-
--- Função para desenhar olho fechado (piscando)
-function drawBlinkingEye(cx, cy, w, h)
+-- Função principal para desenhar o olho completo (sem piscada)
+local function drawEye(irisColor, pupilSize, offsetX, offsetY)
+    -- fundo do frame
     monitor.setBackgroundColor(colors.black)
     monitor.clear()
-    
-    -- Desenha uma linha horizontal para olho fechado
-    local lineThickness = math.floor(h * 0.1)
-    for y = -lineThickness, lineThickness do
-        local xWidth = math.floor(w * 0.9)
-        for x = -math.floor(xWidth/2), math.floor(xWidth/2) do
-            local screenX = cx + x
-            local screenY = cy + y
-            
-            if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
-                monitor.setCursorPos(screenX, screenY)
-                monitor.write(" ")
-            end
-        end
-    end
+
+    local centerX = math.floor(width / 2)
+    local centerY = math.floor(height / 2)
+    local scleraRadius = math.max(2, math.floor(math.min(width, height) * 0.45))
+
+    drawRoundEye(centerX, centerY, scleraRadius)
+    drawIris(centerX, centerY, irisColor, pupilSize, offsetX, offsetY, scleraRadius)
 end
 
--- Função principal para desenhar o olho completo
-function drawEye(irisColor, pupilSize, offsetX, offsetY, blinking)
-    if blinking then
-        drawBlinkingEye(math.floor(width/2), math.floor(height/2), width, height)
-    else
-        monitor.setBackgroundColor(colors.white)
-        monitor.clear()
-        
-        local centerX = math.floor(width / 2)
-        local centerY = math.floor(height / 2)
-        local eyeWidth = math.floor(width * 0.8)
-        local eyeHeight = math.floor(height * 0.5)
-        
-        drawAlmondEye(centerX, centerY, eyeWidth, eyeHeight)
-        drawIris(centerX, centerY, irisColor, pupilSize, offsetX, offsetY)
-    end
-end
-
--- Loop principal do programa
-function main()
+-- Loop principal do programa (SEM PISCADA)
+local function main()
     local colorChangeTimer = 0
     local currentColor = colors.blue
-    local blinkTimer = 0
-    local isBlinking = false
-    local blinkDuration = 0.3  -- 300ms para piscar
-    
-    print("Iniciando Olho Psicodélico...")
+
+    print("Iniciando Olho Psicodélico (redondo, sem piscada)...")
     print("Tamanho do monitor: " .. width .. "x" .. height)
-    
+
     while true do
         local currentTime = os.clock()
-        
-        -- Controle de piscada
-        if isBlinking then
-            if currentTime - blinkTimer > blinkDuration then
-                isBlinking = false
-            end
-        else
-            if shouldBlink() then
-                isBlinking = true
-                blinkTimer = currentTime
-            end
-        end
-        
+
         -- Muda cor a cada 1.5 segundos
         if currentTime - colorChangeTimer > 1.5 then
             currentColor = getRandomColor()
             colorChangeTimer = currentTime
         end
-        
-        -- Movimento do olho (só quando não está piscando)
-        local moveX, moveY = 0, 0
-        if not isBlinking then
-            moveX, moveY = getEyeMovement()
-        end
-        
-        -- Desenha o olho
-        drawEye(currentColor, 0.4, moveX, moveY, isBlinking)
-        
-        -- Pequena pausa para animação suave
+
+        -- Movimento do olho
+        local moveX, moveY = getEyeMovement()
+
+        -- Desenha o olho (sempre aberto)
+        drawEye(currentColor, 0.4, moveX, moveY)
+
         os.sleep(0.05)
     end
 end
 
 -- Inicialização
-math.randomseed(os.clock())
+math.randomseed(os.time() or os.clock())
+math.random(); math.random()
 main()
+-- ...existing code...
