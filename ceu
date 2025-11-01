@@ -1,0 +1,279 @@
+-- =============================================
+-- CÉU ESTRELADO - TELAS ILIMITADAS
+-- =============================================
+
+print("=== INICIANDO CÉU ESTRELADO ILIMITADO ===")
+
+-- Encontra TODOS os monitores, não importa quantos
+local monitores = {peripheral.find("monitor")}
+
+-- Verifica se encontrou monitores
+if #monitores == 0 then
+    print("ERRO: Nenhum monitor encontrado!")
+    print("Conecte monitores Advanced ao computador")
+    return
+end
+
+-- Ajusta se peripheral.find retornou apenas um monitor
+if not monitores[1] then
+    monitores = {monitores}
+end
+
+print("Telas conectadas: " .. #monitores)
+
+-- Configura todos os monitores automaticamente
+for i, mon in ipairs(monitores) do
+    mon.setTextScale(0.5)
+end
+
+-- Calcula tamanho total da tela gigante DINAMICAMENTE
+local larguras = {}
+local larguraTotal = 0
+local alturaTotal = 0
+
+for i, mon in ipairs(monitores) do
+    local w, h = mon.getSize()
+    larguras[i] = w
+    larguraTotal = larguraTotal + w
+    if h > alturaTotal then
+        alturaTotal = h
+    end
+    print("Monitor " .. i .. ": " .. w .. "x" .. h)
+end
+
+print("Tela gigante total: " .. larguraTotal .. "x" .. alturaTotal)
+print("Área total: " .. (larguraTotal * alturaTotal) .. " pixels")
+
+-- Cores para estrelas
+local coresEstrelas = {
+    colors.white,
+    colors.lightGray, 
+    colors.yellow,
+    colors.lightBlue,
+    colors.cyan
+}
+
+-- Array para armazenar as estrelas
+local estrelas = {}
+local cometa = nil
+
+-- Função para desenhar em POSIÇÃO ABSOLUTA da tela gigante
+function desenharNaTelaGigante(x, y, cor)
+    local xAtual = 0
+    
+    for i, mon in ipairs(monitores) do
+        local w = larguras[i]
+        local h = alturaTotal
+        
+        -- Verifica se esta coordenada está neste monitor
+        if x >= xAtual and x < xAtual + w and y >= 1 and y <= h then
+            local xLocal = x - xAtual + 1
+            local yLocal = y
+            
+            mon.setBackgroundColor(cor)
+            mon.setCursorPos(xLocal, yLocal)
+            mon.write(" ")
+            return true
+        end
+        
+        xAtual = xAtual + w
+    end
+    return false
+end
+
+-- Função para criar estrelas baseada no tamanho total
+function criarEstrelasIniciais()
+    local areaTotal = larguraTotal * alturaTotal
+    local quantidadeEstrelas = math.floor(areaTotal * 0.03)  -- 3% de densidade
+    
+    -- Limite mínimo e máximo de estrelas
+    quantidadeEstrelas = math.max(20, math.min(500, quantidadeEstrelas))
+    
+    for i = 1, quantidadeEstrelas do
+        local x = math.random(1, larguraTotal)
+        local y = math.random(1, alturaTotal)
+        local cor = coresEstrelas[math.random(1, #coresEstrelas)]
+        local brilho = math.random(1, 3)  -- 1=fraco, 2=médio, 3=forte
+        
+        estrelas[#estrelas + 1] = {
+            x = x,
+            y = y,
+            cor = cor,
+            brilho = brilho,
+            piscar = math.random(1, 100)  -- Frequência de piscar
+        }
+    end
+    print("Criadas " .. #estrelas .. " estrelas no céu")
+end
+
+-- Função para criar um novo cometa
+function criarCometa()
+    local lado = math.random(1, 4)  -- De qual lado vai aparecer
+    
+    local x, y, dx, dy
+    
+    if lado == 1 then    -- Topo
+        x = math.random(1, larguraTotal)
+        y = 1
+        dx = (math.random() - 0.5) * 2
+        dy = math.random(0.5, 1.5)
+    elseif lado == 2 then -- Direita
+        x = larguraTotal
+        y = math.random(1, alturaTotal)
+        dx = -math.random(0.5, 1.5)
+        dy = (math.random() - 0.5) * 2
+    elseif lado == 3 then -- Baixo
+        x = math.random(1, larguraTotal)
+        y = alturaTotal
+        dx = (math.random() - 0.5) * 2
+        dy = -math.random(0.5, 1.5)
+    else                 -- Esquerda
+        x = 1
+        y = math.random(1, alturaTotal)
+        dx = math.random(0.5, 1.5)
+        dy = (math.random() - 0.5) * 2
+    end
+    
+    cometa = {
+        x = x,
+        y = y,
+        dx = dx,
+        dy = dy,
+        vida = math.random(30, 80),  -- Duração do cometa
+        cauda = {}
+    }
+end
+
+-- Função para desenhar o céu completo
+function desenharCeu()
+    -- Fundo preto (espaço) em TODOS os monitores
+    for i, mon in ipairs(monitores) do
+        mon.setBackgroundColor(colors.black)
+        mon.clear()
+    end
+    
+    -- Desenha estrelas em TODA a área gigante
+    for i, estrela in ipairs(estrelas) do
+        -- Efeito de piscar natural
+        if math.random(1, 100) <= estrela.piscar then
+            local corEstrela = estrela.cor
+            
+            -- Estrelas mais brilhantes são mais visíveis
+            if estrela.brilho == 3 then
+                desenharNaTelaGigante(estrela.x, estrela.y, corEstrela)
+                -- Estrelas brilhantes têm um pequeno brilho ao redor
+                if math.random(1, 3) == 1 then
+                    desenharNaTelaGigante(estrela.x + 1, estrela.y, colors.gray)
+                    desenharNaTelaGigante(estrela.x - 1, estrela.y, colors.gray)
+                end
+            else
+                desenharNaTelaGigante(estrela.x, estrela.y, corEstrela)
+            end
+        end
+    end
+    
+    -- Desenha cometa se existir
+    if cometa then
+        -- Desenha cauda do cometa
+        for i, ponto in ipairs(cometa.cauda) do
+            local intensidade = math.floor((i / #cometa.cauda) * 10) + 5
+            
+            desenharNaTelaGigante(ponto.x, ponto.y, colors.white)
+            
+            -- Efeito de desvanecimento na cauda
+            if i > math.floor(#cometa.cauda / 2) then
+                desenharNaTelaGigante(ponto.x + 1, ponto.y, colors.gray)
+                desenharNaTelaGigante(ponto.x - 1, ponto.y, colors.gray)
+            end
+        end
+        
+        -- Desenha núcleo do cometa
+        desenharNaTelaGigante(cometa.x, cometa.y, colors.white)
+        desenharNaTelaGigante(cometa.x + 1, cometa.y, colors.yellow)
+        desenharNaTelaGigante(cometa.x - 1, cometa.y, colors.yellow)
+    end
+end
+
+-- Função para atualizar animação
+function atualizarAnimacao()
+    -- Atualiza piscar das estrelas
+    for i, estrela in ipairs(estrelas) do
+        if math.random(1, 50) == 1 then
+            estrela.piscar = math.random(1, 100)
+        end
+    end
+    
+    -- Cria novas estrelas ocasionalmente (baseado no tamanho)
+    if math.random(1, 100) == 1 and #estrelas < (larguraTotal * alturaTotal * 0.05) then
+        local x = math.random(1, larguraTotal)
+        local y = math.random(1, alturaTotal)
+        local cor = coresEstrelas[math.random(1, #coresEstrelas)]
+        
+        estrelas[#estrelas + 1] = {
+            x = x,
+            y = y,
+            cor = cor,
+            brilho = math.random(1, 3),
+            piscar = math.random(1, 100)
+        }
+    end
+    
+    -- Atualiza cometa
+    if cometa then
+        -- Adiciona posição atual à cauda
+        table.insert(cometa.cauda, 1, {x = cometa.x, y = cometa.y})
+        
+        -- Limita tamanho da cauda
+        if #cometa.cauda > 15 then
+            table.remove(cometa.cauda)
+        end
+        
+        -- Move cometa
+        cometa.x = cometa.x + cometa.dx
+        cometa.y = cometa.y + cometa.dy
+        
+        -- Reduz vida
+        cometa.vida = cometa.vida - 1
+        
+        -- Remove cometa se saiu da tela ou sem vida
+        if cometa.vida <= 0 or cometa.x < 1 or cometa.x > larguraTotal or cometa.y < 1 or cometa.y > alturaTotal then
+            cometa = nil
+        end
+    else
+        -- Chance de criar novo cometa
+        if math.random(1, 80) == 1 then  -- 1.25% de chance a cada frame
+            criarCometa()
+        end
+    end
+end
+
+-- Loop principal
+function main()
+    print("Criando céu estrelado infinito...")
+    criarEstrelasIniciais()
+    
+    print("\n=== CONFIGURAÇÃO ATUAL ===")
+    print("Telas: " .. #monitores)
+    print("Tamanho total: " .. larguraTotal .. "x" .. alturaTotal)
+    print("Estrelas: " .. #estrelas)
+    print("Pressione Ctrl+T para parar")
+    print("============================\n")
+    
+    local frame = 0
+    while true do
+        desenharCeu()
+        atualizarAnimacao()
+        
+        frame = frame + 1
+        -- A cada 100 frames, mostra info (opcional)
+        if frame % 100 == 0 then
+            print("Frame " .. frame .. " - Estrelas: " .. #estrelas .. (cometa and " - ☄️ Cometa!" or ""))
+        end
+        
+        os.sleep(0.15)  -- Velocidade da animação
+    end
+end
+
+-- Inicia o programa
+math.randomseed(os.time())
+main()
