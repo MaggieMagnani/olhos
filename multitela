@@ -1,8 +1,8 @@
 -- =============================================
--- ONDA DE CORES PSICODÉLICA - TELAS SEQUENCIAIS
+-- SHOW DE LUZES - BALADA PSICODÉLICA
 -- =============================================
 
-print("=== INICIANDO ONDA DE CORES ===")
+print("=== SHOW DE LUZES INICIADO ===")
 
 -- Encontra todos os monitores
 local monitores = {peripheral.find("monitor")}
@@ -10,43 +10,35 @@ if not monitores[1] then
     monitores = {monitores}
 end
 
-print("Monitores conectados: " .. #monitores)
+print("Telas conectadas: " .. #monitores)
 
 -- Configura todos os monitores
 for i, mon in ipairs(monitores) do
     mon.setTextScale(0.5)
 end
 
--- Cores psicodélicas para a sequência
+-- Paleta de cores psicodélicas
 local cores = {
-    colors.red,
-    colors.orange, 
-    colors.yellow,
-    colors.green,
-    colors.blue,
-    colors.purple,
-    colors.pink,
-    colors.cyan,
-    colors.white,
-    colors.magenta
+    colors.red,      -- 1
+    colors.orange,   -- 2  
+    colors.yellow,   -- 3
+    colors.lime,     -- 4
+    colors.green,    -- 5
+    colors.cyan,     -- 6
+    colors.blue,     -- 7
+    colors.purple,   -- 8
+    colors.pink,     -- 9
+    colors.magenta,  -- 10
+    colors.white,    -- 11
+    colors.lightBlue -- 12
 }
 
--- Função para piscar uma tela específica
-function piscarTela(numeroTela, cor)
+-- Função para preencher tela com cor (SEM TEXTO)
+function preencherTela(numeroTela, cor)
     local mon = monitores[numeroTela]
     if mon then
-        local w, h = mon.getSize()
-        
-        -- Pisca a tela inteira com a cor
         mon.setBackgroundColor(cor)
-        mon.clear()
-        
-        -- Mostra qual tela é
-        mon.setTextColor(colors.black)
-        mon.setCursorPos(2, math.floor(h/2))
-        mon.write("TELA " .. numeroTela)
-        
-        print("Tela " .. numeroTela .. " piscou: " .. cor)
+        mon.clear()  -- Apenas preenche com a cor, sem texto
     end
 end
 
@@ -55,71 +47,52 @@ function resetarTelas()
     for i, mon in ipairs(monitores) do
         mon.setBackgroundColor(colors.black)
         mon.clear()
-        mon.setTextColor(colors.white)
-        mon.setCursorPos(1, 1)
-        mon.write("TELA " .. i)
     end
 end
 
--- Sequência de onda através das telas
-function ondaDeCores()
+-- =======================
+-- NOVOS EFEITOS:
+-- =======================
+
+-- 1. ONDA SEQUENCIAL (sem texto)
+function ondaSequencial()
+    print("Efeito: Onda Sequencial")
+    
     local sequencia = 1
     
     while true do
-        print("=== SEQUÊNCIA " .. sequencia .. " ===")
-        
-        -- Pisca cada tela em sequência com cores diferentes
         for i = 1, #monitores do
             local cor = cores[(sequencia + i - 2) % #cores + 1]
-            
-            -- Pisca esta tela
-            piscarTela(i, cor)
-            
-            -- Pequena pausa entre as telas (efeito de onda)
-            os.sleep(0.3)
+            preencherTela(i, cor)
+            os.sleep(0.2)  -- Velocidade da onda
         end
-        
-        -- Pausa antes de reiniciar
-        os.sleep(0.5)
-        
-        -- Reset para próxima sequência
+        os.sleep(0.3)
         resetarTelas()
-        os.sleep(0.2)
+        os.sleep(0.1)
         
         sequencia = sequencia + 1
-        
-        -- A cada 5 sequências, muda o padrão
-        if sequencia % 5 == 0 then
-            print("--- MUDANDO PADRÃO ---")
-            os.sleep(1)
-        end
     end
 end
 
--- Modo alternativo: todas piscam aleatoriamente
+-- 2. CAOS COLORIDO (sem texto)
 function caosColorido()
-    print("=== MODO CAOS COLORIDO ===")
+    print("Efeito: Caos Colorido")
     
     while true do
-        -- Escolhe uma tela aleatória e uma cor aleatória
         local telaAleatoria = math.random(1, #monitores)
         local corAleatoria = cores[math.random(1, #cores)]
         
-        -- Pisca a tela escolhida
-        piscarTela(telaAleatoria, corAleatoria)
+        preencherTela(telaAleatoria, corAleatoria)
+        os.sleep(math.random(5, 20) / 100)  -- Mais rápido
         
-        -- Pausa aleatória entre 0.1 e 0.5 segundos
-        os.sleep(math.random(10, 50) / 100)
-        
-        -- Reseta após breve momento
         resetarTelas()
-        os.sleep(0.1)
+        os.sleep(0.05)
     end
 end
 
--- Modo pulsante sincronizado
+-- 3. PULSAR SINCRONIZADO (sem texto)
 function pulsarSincronizado()
-    print("=== MODO PULSAR SINCRONIZADO ===")
+    print("Efeito: Pulsar Sincronizado")
     
     local pulsos = 0
     
@@ -127,57 +100,172 @@ function pulsarSincronizado()
         pulsos = pulsos + 1
         local corBase = cores[(pulsos - 1) % #cores + 1]
         
-        print("Pulso " .. pulsos .. " - Cor: " .. corBase)
-        
-        -- Todas as telas piscam juntas
+        -- Todas piscam juntas
         for i = 1, #monitores do
-            piscarTela(i, corBase)
+            preencherTela(i, corBase)
         end
         
-        os.sleep(0.5)  -- Tempo ligado
+        os.sleep(0.3)  -- Tempo ligado
         resetarTelas() -- Reseta
-        os.sleep(0.3)  -- Tempo desligado
-        
-        -- Pausa maior a cada 10 pulsos
-        if pulsos % 10 == 0 then
-            os.sleep(1)
+        os.sleep(0.2)  -- Tempo desligado
+    end
+end
+
+-- 4. GRADIENTE HORIZONTAL
+function gradienteHorizontal()
+    print("Efeito: Gradiente Horizontal")
+    
+    while true do
+        for inicioCor = 1, #cores do
+            for i = 1, #monitores do
+                local corIndex = (inicioCor + i - 2) % #cores + 1
+                preencherTela(i, cores[corIndex])
+            end
+            os.sleep(0.4)
         end
     end
 end
 
--- Menu principal
+-- 5. XENON (flash rápido)
+function efeitoXenon()
+    print("Efeito: Xenon")
+    
+    while true do
+        -- Flash branco rápido em todas as telas
+        for i = 1, #monitores do
+            preencherTela(i, colors.white)
+        end
+        os.sleep(0.1)
+        
+        resetarTelas()
+        os.sleep(0.1)
+        
+        -- Flash colorido
+        local corFlash = cores[math.random(1, #cores)]
+        for i = 1, #monitores do
+            preencherTela(i, corFlash)
+        end
+        os.sleep(0.15)
+        
+        resetarTelas()
+        os.sleep(0.3)
+    end
+end
+
+-- 6. RESPIRAR (fade simulado)
+function efeitoRespirar()
+    print("Efeito: Respirar")
+    
+    local fase = 1
+    
+    while true do
+        local corBase = cores[(fase - 1) % #cores + 1]
+        
+        -- "Respira" por 3 ciclos com a mesma cor
+        for ciclo = 1, 3 do
+            -- Aumenta brilho (cores mais claras)
+            for i = 1, #monitores do
+                preencherTela(i, corBase)
+            end
+            os.sleep(0.4)
+            
+            -- Diminui brilho (volta ao preto)
+            resetarTelas()
+            os.sleep(0.3)
+        end
+        
+        fase = fase + 1
+    end
+end
+
+-- 7. ARCO-ÍRIS RODANDO
+function arcoirisRodando()
+    print("Efeito: Arco-Íris Rodando")
+    
+    local posicao = 1
+    
+    while true do
+        for i = 1, #monitores do
+            local corIndex = (posicao + i - 2) % #cores + 1
+            preencherTela(i, cores[corIndex])
+        end
+        
+        os.sleep(0.3)
+        posicao = posicao + 1
+        
+        if posicao > #cores then
+            posicao = 1
+        end
+    end
+end
+
+-- 8. ESTROBOSCOPIO ALEATÓRIO
+function estroboscopio()
+    print("Efeito: Estroboscópio")
+    
+    while true do
+        -- Ativa telas aleatórias
+        for i = 1, #monitores do
+            if math.random(1, 2) == 1 then  -- 50% de chance
+                preencherTela(i, colors.white)
+            end
+        end
+        
+        os.sleep(0.08)  -- Muito rápido
+        resetarTelas()
+        os.sleep(0.12)
+    end
+end
+
+-- Menu principal melhorado
 function menu()
-    print("\n=== MENU ONDA DE CORES ===")
-    print("1. Onda Sequencial (padrão)")
-    print("2. Caos Colorido (aleatório)") 
-    print("3. Pulsar Sincronizado (todas juntas)")
-    print("4. Sair")
-    
-    write("Escolha um modo (1-4): ")
-    local escolha = read()
-    
     resetarTelas()
     
+    print("\n=== SHOW DE LUZES - BALADA ===")
+    print("1.  Onda Sequencial")
+    print("2.  Caos Colorido") 
+    print("3.  Pulsar Sincronizado")
+    print("4.  Gradiente Horizontal")
+    print("5.  Xenon (Flash)")
+    print("6.  Respirar")
+    print("7.  Arco-Íris Rodando")
+    print("8.  Estroboscópio")
+    print("9.  Sair")
+    
+    write("Escolha um efeito (1-9): ")
+    local escolha = read()
+    
     if escolha == "1" then
-        ondaDeCores()
+        ondaSequencial()
     elseif escolha == "2" then
         caosColorido()
     elseif escolha == "3" then
         pulsarSincronizado()
     elseif escolha == "4" then
-        print("Programa encerrado!")
+        gradienteHorizontal()
+    elseif escolha == "5" then
+        efeitoXenon()
+    elseif escolha == "6" then
+        efeitoRespirar()
+    elseif escolha == "7" then
+        arcoirisRodando()
+    elseif escolha == "8" then
+        estroboscopio()
+    elseif escolha == "9" then
+        print("Show encerrado!")
+        resetarTelas()
         return
     else
-        print("Opção inválida! Tente novamente.")
+        print("Opção inválida!")
         os.sleep(1)
         menu()
     end
 end
 
 -- Inicialização
-print("Programa iniciado com " .. #monitores .. " telas")
-resetarTelas()
-os.sleep(1)
+print("Show de Luzes pronto com " .. #monitores .. " telas!")
+print("Pressione Ctrl+T para parar qualquer efeito")
+os.sleep(2)
 
 -- Inicia o menu
 menu()
