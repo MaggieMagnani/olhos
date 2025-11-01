@@ -1,0 +1,200 @@
+-- ...existing code...
+-- =============================================
+-- OLHO PSICODÉLICO PARA BALADA NO MINECRAFT
+-- ComputerCraft - Programa Completo
+-- =============================================
+
+-- Encontra e configura o monitor
+local monitor = peripheral.find("monitor")
+if not monitor then
+    print("Nenhum monitor encontrado!")
+    return
+end
+
+monitor.setTextScale(0.5)
+local width, height = monitor.getSize()
+
+-- Cores psicodélicas disponíveis
+local psychedelicColors = {
+    colors.red, colors.orange, colors.yellow,
+    colors.green, colors.lime, colors.blue,
+    colors.purple, colors.pink, colors.magenta,
+    colors.cyan, colors.white
+}
+
+-- Função para cor aleatória
+function getRandomColor()
+    return psychedelicColors[math.random(1, #psychedelicColors)]
+end
+
+-- Função para desenhar olho amendoado (sclera em branco)
+function drawAlmondEye(cx, cy, w, h)
+    -- Desenha a sclera (formato amendoado) em branco
+    monitor.setBackgroundColor(colors.white)
+
+    for y = -math.floor(h/2), math.floor(h/2) do
+        local yRatio = y / (h/2)
+        local xWidth = math.floor(w * math.sqrt(math.max(0, 1 - yRatio*yRatio)))
+
+        for x = -math.floor(xWidth/2), math.floor(xWidth/2) do
+            local screenX = cx + x
+            local screenY = cy + y
+
+            if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
+                monitor.setCursorPos(screenX, screenY)
+                monitor.write(" ")
+            end
+        end
+    end
+end
+
+-- Função para desenhar íris e pupila
+function drawIris(cx, cy, color, pupilSize, offsetX, offsetY)
+    local irisRadius = math.floor(math.min(width, height) * 0.15)
+    local pupilRadius = math.floor(irisRadius * pupilSize)
+
+    -- Aplica movimento à posição da íris
+    local irisX = cx + offsetX
+    local irisY = cy + offsetY
+
+    -- Desenha íris
+    monitor.setBackgroundColor(color)
+    for y = -irisRadius, irisRadius do
+        for x = -irisRadius, irisRadius do
+            if x*x + y*y <= irisRadius*irisRadius then
+                local screenX = irisX + x
+                local screenY = irisY + y
+
+                if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
+                    monitor.setCursorPos(screenX, screenY)
+                    monitor.write(" ")
+                end
+            end
+        end
+    end
+
+    -- Desenha pupila
+    monitor.setBackgroundColor(colors.black)
+    for y = -pupilRadius, pupilRadius do
+        for x = -pupilRadius, pupilRadius do
+            if x*x + y*y <= pupilRadius*pupilRadius then
+                local screenX = irisX + x
+                local screenY = irisY + y
+
+                if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
+                    monitor.setCursorPos(screenX, screenY)
+                    monitor.write(" ")
+                end
+            end
+        end
+    end
+end
+
+-- Função para movimento suave do olho
+function getEyeMovement()
+    local time = os.clock()
+
+    -- Movimento suave com múltiplas frequências
+    local moveX = math.floor(math.sin(time * 1.7) * width * 0.08)
+    local moveY = math.floor(math.cos(time * 1.3) * height * 0.08)
+
+    return moveX, moveY
+end
+
+-- Função para fazer o olho piscar ocasionalmente
+function shouldBlink()
+    return math.random(1, 200) == 1  -- ~0.5% de chance a cada frame
+end
+
+-- Função para desenhar olho fechado (piscando)
+function drawBlinkingEye(cx, cy, w, h)
+    -- Não limpar toda a tela; desenha uma faixa (pálpebra) preta sobre a sclera central
+    local lineThickness = math.max(1, math.floor(h * 0.12))
+    local eyeHalfW = math.floor(w * 0.45)
+
+    monitor.setBackgroundColor(colors.black)
+    for y = -lineThickness, lineThickness do
+        for x = -eyeHalfW, eyeHalfW do
+            local screenX = cx + x
+            local screenY = cy + y
+
+            if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
+                monitor.setCursorPos(screenX, screenY)
+                monitor.write(" ")
+            end
+        end
+    end
+end
+
+-- Função principal para desenhar o olho completo
+function drawEye(irisColor, pupilSize, offsetX, offsetY, blinking)
+    -- Plano de fundo do frame: preto (salva contraste)
+    monitor.setBackgroundColor(colors.black)
+    monitor.clear()
+
+    local centerX = math.floor(width / 2)
+    local centerY = math.floor(height / 2)
+    local eyeWidth = math.floor(width * 0.8)
+    local eyeHeight = math.floor(height * 0.5)
+
+    if blinking then
+        -- Desenha a sclera antes da pálpebra para consistência visual
+        drawAlmondEye(centerX, centerY, eyeWidth, eyeHeight)
+        drawBlinkingEye(centerX, centerY, eyeWidth, eyeHeight)
+    else
+        drawAlmondEye(centerX, centerY, eyeWidth, eyeHeight)
+        drawIris(centerX, centerY, irisColor, pupilSize, offsetX, offsetY)
+    end
+end
+
+-- Loop principal do programa
+function main()
+    local colorChangeTimer = 0
+    local currentColor = colors.blue
+    local blinkTimer = 0
+    local isBlinking = false
+    local blinkDuration = 0.3  -- 300ms para piscar
+
+    print("Iniciando Olho Psicodélico...")
+    print("Tamanho do monitor: " .. width .. "x" .. height)
+
+    while true do
+        local currentTime = os.clock()
+
+        -- Controle de piscada
+        if isBlinking then
+            if currentTime - blinkTimer > blinkDuration then
+                isBlinking = false
+            end
+        else
+            if shouldBlink() then
+                isBlinking = true
+                blinkTimer = currentTime
+            end
+        end
+
+        -- Muda cor a cada 1.5 segundos
+        if currentTime - colorChangeTimer > 1.5 then
+            currentColor = getRandomColor()
+            colorChangeTimer = currentTime
+        end
+
+        -- Movimento do olho (só quando não está piscando)
+        local moveX, moveY = 0, 0
+        if not isBlinking then
+            moveX, moveY = getEyeMovement()
+        end
+
+        -- Desenha o olho
+        drawEye(currentColor, 0.4, moveX, moveY, isBlinking)
+
+        -- Pequena pausa para animação suave
+        os.sleep(0.05)
+    end
+end
+
+-- Inicialização
+math.randomseed(os.time() or os.clock())
+math.random(); math.random() -- descartar primeiros valores
+main()
+-- ...existing code...
