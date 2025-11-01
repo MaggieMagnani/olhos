@@ -1,168 +1,99 @@
 -- =============================================
--- OLHO PSICODÉLICO REDONDO PARA BALADA
--- ComputerCraft - Versão Redonda
+-- TESTE OLHO GIGANTE - 3 TELAS
 -- =============================================
 
--- Encontra e configura o monitor
-local monitor = peripheral.find("monitor")
-if not monitor then
-    print("Nenhum monitor encontrado!")
-    return
+print("=== INICIANDO OLHO GIGANTE ===")
+
+-- Encontra todos os monitores
+local monitores = {peripheral.find("monitor")}
+if not monitores[1] then
+    monitores = {monitores}
 end
 
-monitor.setTextScale(0.5)
-local width, height = monitor.getSize()
+print("Monitores conectados: " .. #monitores)
 
--- Cores psicodélicas disponíveis
-local psychedelicColors = {
-    colors.red, colors.orange, colors.yellow, 
-    colors.green, colors.lime, colors.blue, 
-    colors.purple, colors.pink, colors.magenta, 
-    colors.cyan, colors.white
-}
-
--- Função para cor aleatória
-function getRandomColor()
-    return psychedelicColors[math.random(1, #psychedelicColors)]
+-- Configura todos os monitores
+for i, mon in ipairs(monitores) do
+    mon.setTextScale(0.5)
 end
 
--- Função para desenhar círculo perfeito (olho redondo)
-function drawRoundEye(cx, cy, radius, bgColor)
-    monitor.setBackgroundColor(bgColor)
+-- Pega o tamanho de cada monitor e calcula o total
+local larguras = {}
+local alturaTotal = 0
+local larguraTotal = 0
+
+for i, mon in ipairs(monitores) do
+    local w, h = mon.getSize()
+    larguras[i] = w
+    larguraTotal = larguraTotal + w
+    if h > alturaTotal then
+        alturaTotal = h
+    end
+    print("Monitor " .. i .. ": " .. w .. "x" .. h)
+end
+
+print("Tela gigante: " .. larguraTotal .. "x" .. alturaTotal)
+
+-- Função para desenhar em posição específica da tela gigante
+function desenharNaTelaGigante(x, y, cor)
+    local xAtual = 0
     
-    for y = -radius, radius do
-        for x = -radius, radius do
-            -- Fórmula do círculo: x² + y² <= r²
-            if x*x + y*y <= radius*radius then
-                local screenX = cx + x
-                local screenY = cy + y
-                
-                if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
-                    monitor.setCursorPos(screenX, screenY)
-                    monitor.write(" ")
-                end
+    for i, mon in ipairs(monitores) do
+        local w = larguras[i]
+        local h = alturaTotal
+        
+        -- Verifica se este ponto está neste monitor
+        if x >= xAtual and x < xAtual + w and y >= 1 and y <= h then
+            local xLocal = x - xAtual + 1
+            local yLocal = y
+            
+            mon.setBackgroundColor(cor)
+            mon.setCursorPos(xLocal, yLocal)
+            mon.write(" ")
+            return true
+        end
+        
+        xAtual = xAtual + w
+    end
+    return false
+end
+
+-- Função para desenhar círculo na tela gigante
+function desenharCirculo(centroX, centroY, raio, cor)
+    for y = -raio, raio do
+        for x = -raio, raio do
+            if x*x + y*y <= raio*raio then
+                desenharNaTelaGigante(centroX + x, centroY + y, cor)
             end
         end
     end
 end
 
--- Função para desenhar íris e pupila redondas
-function drawIrisRound(cx, cy, irisRadius, pupilRadius, color, offsetX, offsetY)
-    local irisX = cx + offsetX
-    local irisY = cy + offsetY
-    
-    -- Desenha íris (círculo colorido)
-    monitor.setBackgroundColor(color)
-    for y = -irisRadius, irisRadius do
-        for x = -irisRadius, irisRadius do
-            if x*x + y*y <= irisRadius*irisRadius then
-                local screenX = irisX + x
-                local screenY = irisY + y
-                
-                if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
-                    monitor.setCursorPos(screenX, screenY)
-                    monitor.write(" ")
-                end
-            end
-        end
-    end
-    
-    -- Desenha pupila (círculo preto)
-    monitor.setBackgroundColor(colors.black)
-    for y = -pupilRadius, pupilRadius do
-        for x = -pupilRadius, pupilRadius do
-            if x*x + y*y <= pupilRadius*pupilRadius then
-                local screenX = irisX + x
-                local screenY = irisY + y
-                
-                if screenX >= 1 and screenX <= width and screenY >= 1 and screenY <= height then
-                    monitor.setCursorPos(screenX, screenY)
-                    monitor.write(" ")
-                end
-            end
-        end
-    end
+-- TESTE 1: Linha horizontal através das 3 telas
+print("Desenhando linha de teste...")
+for x = 1, larguraTotal do
+    desenharNaTelaGigante(x, math.floor(alturaTotal/2), colors.red)
+end
+os.sleep(2)
+
+-- TESTE 2: Círculo gigante
+print("Desenhando círculo gigante...")
+-- Limpa tudo
+for i, mon in ipairs(monitores) do
+    mon.setBackgroundColor(colors.black)
+    mon.clear()
 end
 
--- Função para movimento em múltiplas velocidades
-function getEyeMovement()
-    local time = os.clock()
-    
-    -- Três movimentos diferentes com velocidades variadas
-    local moveX1 = math.sin(time * 0.8) * width * 0.1   -- Movimento lento
-    local moveY1 = math.cos(time * 0.8) * height * 0.1
-    
-    local moveX2 = math.sin(time * 2.2) * width * 0.05  -- Movimento médio
-    local moveY2 = math.cos(time * 1.7) * height * 0.05
-    
-    local moveX3 = math.sin(time * 4.5) * width * 0.02  -- Movimento rápido
-    local moveY3 = math.cos(time * 3.9) * height * 0.02
-    
-    -- Combina os movimentos
-    local totalX = moveX1 + moveX2 + moveX3
-    local totalY = moveY1 + moveY2 + moveY3
-    
-    -- Limita o movimento para não sair do olho
-    totalX = math.max(-width * 0.2, math.min(width * 0.2, totalX))
-    totalY = math.max(-height * 0.2, math.min(height * 0.2, totalY))
-    
-    return math.floor(totalX), math.floor(totalY)
-end
+local centroX = math.floor(larguraTotal / 2)
+local centroY = math.floor(alturaTotal / 2)
+local raio = math.floor(math.min(larguraTotal, alturaTotal) * 0.4)
 
--- Função principal para desenhar o olho completo
-function drawRoundEyeComplete(irisColor, offsetX, offsetY)
-    -- Limpa o monitor com fundo preto (contorno)
-    monitor.setBackgroundColor(colors.black)
-    monitor.clear()
-    
-    local centerX = math.floor(width / 2)
-    local centerY = math.floor(height / 2)
-    
-    -- Tamanhos proporcionais ao monitor
-    local eyeRadius = math.floor(math.min(width, height) * 0.4)  -- 40% do menor lado
-    local irisRadius = math.floor(eyeRadius * 0.6)               -- 60% do olho
-    local pupilRadius = math.floor(irisRadius * 0.4)             -- 40% da íris
-    
-    -- Desenha olho branco (esclera)
-    drawRoundEye(centerX, centerY, eyeRadius, colors.white)
-    
-    -- Desenha íris e pupila com movimento
-    drawIrisRound(centerX, centerY, irisRadius, pupilRadius, irisColor, offsetX, offsetY)
-    
-    -- Desenha contorno preto ao redor do olho
-    drawRoundEye(centerX, centerY, eyeRadius, colors.black)
-    drawRoundEye(centerX, centerY, eyeRadius - 1, colors.white)  -- Borda interna
-end
+desenharCirculo(centroX, centroY, raio, colors.blue)
+desenharCirculo(centroX, centroY, math.floor(raio * 0.7), colors.white)
+desenharCirculo(centroX, centroY, math.floor(raio * 0.4), colors.red)
 
--- Loop principal do programa
-function main()
-    local colorChangeTimer = 0
-    local currentColor = colors.blue
-    local movementChangeTimer = 0
-    
-    print("Iniciando Olho Redondo Psicodélico...")
-    print("Tamanho do monitor: " .. width .. "x" .. height)
-    print("Olho formatado como círculo perfeito")
-    
-    while true do
-        local currentTime = os.clock()
-        
-        -- Muda cor a cada 1.5 segundos
-        if currentTime - colorChangeTimer > 1.5 then
-            currentColor = getRandomColor()
-            colorChangeTimer = currentTime
-        end
-        
-        -- Movimento do olho (sempre ativo, sem piscar)
-        local moveX, moveY = getEyeMovement()
-        
-        -- Desenha o olho redondo completo
-        drawRoundEyeComplete(currentColor, moveX, moveY)
-        
-        -- Pequena pausa para animação suave
-        os.sleep(0.05)
-    end
-end
+print("Teste concluído! Olhe as 3 telas!")
+print("O círculo deve estar no CENTRO de todas as telas combinadas")
 
 -- Inicialização
 math.randomseed(os.clock())
