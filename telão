@@ -1,0 +1,374 @@
+-- =============================================
+-- SHOW VISUAL PARA TELÕES DO PALCO
+-- =============================================
+
+print("=== INICIANDO SHOW DOS TELÕES ===")
+
+-- Encontra os 3 telões do palco
+local teloes = {peripheral.find("monitor")}
+if not teloes[1] then
+    teloes = {teloes}
+end
+
+-- Verifica se tem pelo menos 3 telões
+if #teloes < 3 then
+    print("AVISO: Conecte 3 telões para o show completo!")
+    print("Telões encontrados: " .. #teloes)
+end
+
+print("Telões conectados: " .. #teloes)
+
+-- Configura todos os telões
+for i, telao in ipairs(teloes) do
+    telao.setTextScale(0.5)
+end
+
+-- Cores vibrantes para shows
+local coresShow = {
+    colors.red, colors.orange, colors.yellow,
+    colors.green, colors.lime, colors.cyan,
+    colors.blue, colors.purple, colors.pink,
+    colors.magenta, colors.white
+}
+
+-- =======================
+-- EFEITOS ESPECIAIS PARA PALCO
+-- =======================
+
+-- 1. BATIDA MUSICAL (barras de equalizador)
+function efeitoEqualizador()
+    print("🎵 Efeito: Equalizador Musical")
+    
+    while true do
+        for i, telao in ipairs(teloes) do
+            local w, h = telao.getSize()
+            telao.setBackgroundColor(colors.black)
+            telao.clear()
+            
+            -- Desenha barras de equalizador
+            local numBarras = 8
+            local larguraBarra = math.floor(w / numBarras)
+            
+            for barra = 1, numBarras do
+                local altura = math.random(1, h - 2)
+                local cor = coresShow[math.random(1, #coresShow)]
+                
+                -- Desenha a barra
+                for y = 1, altura do
+                    for x = 1, larguraBarra - 1 do
+                        local posX = (barra - 1) * larguraBarra + x
+                        local posY = h - y  -- Começa de baixo
+                        
+                        if posX <= w and posY <= h then
+                            telao.setBackgroundColor(cor)
+                            telao.setCursorPos(posX, posY)
+                            telao.write(" ")
+                        end
+                    end
+                end
+            end
+        end
+        os.sleep(0.2)
+    end
+end
+
+-- 2. EXPLOSÃO DE LASERS
+function efeitoLasers()
+    print("🔦 Efeito: Show de Lasers")
+    
+    local angulos = {}
+    
+    -- Inicializa ângulos dos lasers
+    for i = 1, #teloes do
+        angulos[i] = math.random(1, 360)
+    end
+    
+    while true do
+        for i, telao in ipairs(teloes) do
+            local w, h = telao.getSize()
+            telao.setBackgroundColor(colors.black)
+            telao.clear()
+            
+            -- Atualiza ângulo do laser
+            angulos[i] = (angulos[i] + math.random(5, 15)) % 360
+            
+            -- Desenha feixes de laser
+            local numLasers = 4
+            for laser = 1, numLasers do
+                local angulo = angulos[i] + (laser * 90 / numLasers)
+                local cor = coresShow[laser]
+                
+                -- Calcula pontos do laser
+                local centroX = math.floor(w / 2)
+                local centroY = math.floor(h / 2)
+                local raio = math.min(w, h)
+                
+                -- Desenha linha do laser
+                for t = 0, raio, 0.5 do
+                    local x = centroX + math.cos(math.rad(angulo)) * t
+                    local y = centroY + math.sin(math.rad(angulo)) * t
+                    
+                    x = math.floor(x)
+                    y = math.floor(y)
+                    
+                    if x >= 1 and x <= w and y >= 1 and y <= h then
+                        telao.setBackgroundColor(cor)
+                        telao.setCursorPos(x, y)
+                        telao.write(" ")
+                    end
+                end
+            end
+        end
+        os.sleep(0.15)
+    end
+end
+
+-- 3. PARTÍCULAS DANÇANTES
+function efeitoParticulas()
+    print("✨ Efeito: Partículas Dançantes")
+    
+    local particulas = {}
+    
+    -- Cria partículas iniciais
+    for i = 1, #teloes do
+        particulas[i] = {}
+        for j = 1, 20 do  -- 20 partículas por telão
+            local w, h = teloes[i].getSize()
+            particulas[i][j] = {
+                x = math.random(1, w),
+                y = math.random(1, h),
+                dx = (math.random() - 0.5) * 2,
+                dy = (math.random() - 0.5) * 2,
+                cor = coresShow[math.random(1, #coresShow)],
+                vida = math.random(50, 200)
+            }
+        end
+    end
+    
+    while true do
+        for i, telao in ipairs(teloes) do
+            local w, h = telao.getSize()
+            telao.setBackgroundColor(colors.black)
+            telao.clear()
+            
+            -- Atualiza e desenha partículas
+            for j, part in ipairs(particulas[i]) do
+                -- Move partícula
+                part.x = part.x + part.dx
+                part.y = part.y + part.dy
+                
+                -- Rebate nas bordas
+                if part.x <= 1 or part.x >= w then part.dx = -part.dx end
+                if part.y <= 1 or part.y >= h then part.dy = -part.dy end
+                
+                -- Mantém dentro dos limites
+                part.x = math.max(1, math.min(w, part.x))
+                part.y = math.max(1, math.min(h, part.y))
+                
+                -- Desenha partícula
+                telao.setBackgroundColor(part.cor)
+                telao.setCursorPos(math.floor(part.x), math.floor(part.y))
+                telao.write(" ")
+                
+                -- Reduz vida e reposiciona se morrer
+                part.vida = part.vida - 1
+                if part.vida <= 0 then
+                    part.x = math.random(1, w)
+                    part.y = math.random(1, h)
+                    part.vida = math.random(50, 200)
+                    part.cor = coresShow[math.random(1, #coresShow)]
+                end
+            end
+        end
+        os.sleep(0.1)
+    end
+end
+
+-- 4. PULSAÇÃO RÍTMICA
+function efeitoPulsacao()
+    print("💓 Efeito: Pulsação Rítmica")
+    
+    local pulsos = 0
+    
+    while true do
+        pulsos = pulsos + 1
+        
+        for i, telao in ipairs(teloes) do
+            local w, h = telao.getSize()
+            local cor = coresShow[(pulsos + i - 2) % #coresShow + 1]
+            
+            -- Calcula tamanho do pulso baseado no ritmo
+            local tamanho = math.floor(math.sin(pulsos * 0.5) * math.min(w, h) * 0.3 + math.min(w, h) * 0.5)
+            
+            telao.setBackgroundColor(cor)
+            telao.clear()
+            
+            -- Desenha círculo pulsante
+            local centroX = math.floor(w / 2)
+            local centroY = math.floor(h / 2)
+            
+            for y = -tamanho, tamanho do
+                for x = -tamanho, tamanho do
+                    if x*x + y*y <= tamanho*tamanho then
+                        local posX = centroX + x
+                        local posY = centroY + y
+                        
+                        if posX >= 1 and posX <= w and posY >= 1 and posY <= h then
+                            telao.setCursorPos(posX, posY)
+                            telao.write(" ")
+                        end
+                    end
+                end
+            end
+        end
+        os.sleep(0.2)
+    end
+end
+
+-- 5. ONDAS DE ENERGIA
+function efeitoOndas()
+    print("🌊 Efeito: Ondas de Energia")
+    
+    local tempo = 0
+    
+    while true do
+        tempo = tempo + 0.3
+        
+        for i, telao in ipairs(teloes) do
+            local w, h = telao.getSize()
+            telao.setBackgroundColor(colors.black)
+            telao.clear()
+            
+            local cor = coresShow[i]
+            
+            -- Desenha ondas
+            for x = 1, w do
+                local onda1 = math.sin(x * 0.3 + tempo) * (h/4) + (h/2)
+                local onda2 = math.cos(x * 0.2 + tempo * 1.3) * (h/5) + (h/2)
+                
+                local y1 = math.floor(onda1)
+                local y2 = math.floor(onda2)
+                
+                if y1 >= 1 and y1 <= h then
+                    telao.setBackgroundColor(cor)
+                    telao.setCursorPos(x, y1)
+                    telao.write(" ")
+                end
+                
+                if y2 >= 1 and y2 <= h then
+                    telao.setBackgroundColor(coresShow[(i % #coresShow) + 1])
+                    telao.setCursorPos(x, y2)
+                    telao.write(" ")
+                end
+            end
+        end
+        os.sleep(0.1)
+    end
+end
+
+-- 6. TEXTO ANIMADO "BALADA"
+function efeitoTextoBalada()
+    print("🎪 Efeito: Texto Balada")
+    
+    local textos = {"BALADA", "FESTA", "SHOW", "DANCE", "DIVIRTA-SE"}
+    local textoIndex = 1
+    local frame = 0
+    
+    while true do
+        frame = frame + 1
+        
+        for i, telao in ipairs(teloes) do
+            local w, h = telao.getSize()
+            telao.setBackgroundColor(colors.black)
+            telao.clear()
+            
+            -- Muda texto a cada 2 segundos
+            if frame % 40 == 0 then
+                textoIndex = (textoIndex % #textos) + 1
+            end
+            
+            local texto = textos[textoIndex]
+            local cor = coresShow[(frame + i - 1) % #coresShow + 1]
+            
+            -- Posiciona texto no centro
+            local x = math.floor((w - #texto) / 2) + 1
+            local y = math.floor(h / 2)
+            
+            telao.setBackgroundColor(cor)
+            telao.setTextColor(colors.black)
+            
+            -- Desenha texto
+            telao.setCursorPos(x, y)
+            telao.write(texto)
+            
+            -- Efeito de brilho ao redor
+            telao.setBackgroundColor(coresShow[(frame + i) % #coresShow + 1])
+            telao.setCursorPos(x - 1, y)
+            telao.write(" ")
+            telao.setCursorPos(x + #texto, y)
+            telao.write(" ")
+        end
+        os.sleep(0.05)
+    end
+end
+
+-- Menu principal para os telões
+function menuTeloes()
+    print("\n" .. string.rep("=", 40))
+    print("🎸 SHOW DOS TELÕES DO PALCO 🎸")
+    print(string.rep("=", 40))
+    print("1. 🎵 Equalizador Musical")
+    print("2. 🔦 Show de Lasers") 
+    print("3. ✨ Partículas Dançantes")
+    print("4. 💓 Pulsação Rítmica")
+    print("5. 🌊 Ondas de Energia")
+    print("6. 🎪 Texto Balada Animado")
+    print("7. 🔄 Voltar ao Menu Anterior")
+    print("8. 🚪 Sair")
+    
+    write("Escolha um efeito (1-8): ")
+    local escolha = read()
+    
+    if escolha == "1" then
+        efeitoEqualizador()
+    elseif escolha == "2" then
+        efeitoLasers()
+    elseif escolha == "3" then
+        efeitoParticulas()
+    elseif escolha == "4" then
+        efeitoPulsacao()
+    elseif escolha == "5" then
+        efeitoOndas()
+    elseif escolha == "6" then
+        efeitoTextoBalada()
+    elseif escolha == "7" then
+        return true  -- Voltar
+    elseif escolha == "8" then
+        print("Show encerrado!")
+        return false  -- Sair
+    else
+        print("Opção inválida!")
+        os.sleep(1)
+    end
+    
+    return true
+end
+
+-- Programa principal
+function main()
+    print("Bem-vindo ao Sistema de Telões da Balada!")
+    print("Telões configurados: " .. #teloes)
+    
+    while menuTeloes() do
+        -- Continua no menu
+    end
+    
+    -- Limpa telões ao sair
+    for i, telao in ipairs(teloes) do
+        telao.setBackgroundColor(colors.black)
+        telao.clear()
+    end
+end
+
+-- Inicia o show
+main()
