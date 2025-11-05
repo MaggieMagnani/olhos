@@ -1,8 +1,8 @@
 -- =============================================
--- FITAS LED SIMPLES E FUNCIONAL
+-- EFEITOS DAFT PUNK - LUZ BRANCA
 -- =============================================
 
-print("=== FITAS LED SIMPLES ===")
+print("=== DAFT PUNK MODE ===")
 
 -- Pega as 4 telas
 local telas = {peripheral.find("monitor")}
@@ -20,50 +20,91 @@ for i, tela in ipairs(telas) do
     tela.setTextScale(0.5)
 end
 
--- Cores básicas para LED
-local cores = {
-    colors.red,
-    colors.orange, 
-    colors.yellow,
-    colors.green,
-    colors.blue,
-    colors.purple,
-    colors.pink
-}
-
--- EFEITO 1: COR ÚNICA DESLIZANTE
-function fitaSimples()
-    print("Fita Simples - Cor Deslizante")
+-- EFEITO 1: PULSO BRANCO SEQUENCIAL (Daft Punk style)
+function pulsoSequencial()
+    print("Pulso Sequencial - Daft Punk")
     
-    local pos = 0
+    local telaAtiva = 1
     
     while true do
-        pos = pos + 1
+        -- Apaga todas as telas
+        for i, tela in ipairs(telas) do
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+        end
+        
+        -- Acende apenas UMA tela de cada vez
+        telas[telaAtiva].setBackgroundColor(colors.white)
+        telas[telaAtiva].clear()
+        
+        -- Próxima tela
+        telaAtiva = telaAtiva + 1
+        if telaAtiva > #telas then telaAtiva = 1 end
+        
+        os.sleep(0.3)  -- Velocidade do pulso
+    end
+end
+
+-- EFEITO 2: ONDA BRANCA
+function ondaBranca()
+    print("Onda Branca")
+    
+    local posicao = 0
+    
+    while true do
+        posicao = posicao + 1
         
         for i, tela in ipairs(telas) do
             local w, h = tela.getSize()
             tela.setBackgroundColor(colors.black)
             tela.clear()
             
-            -- Uma única barra colorida deslizando
-            local xBarra = (pos % w) + 1
-            local cor = cores[(i + math.floor(pos/w)) % #cores + 1]
+            -- Calcula se esta tela deve estar acesa
+            local deveAcender = (posicao % #telas) + 1 == i
             
-            -- Desenha a barra
-            for y = 1, h do
-                tela.setBackgroundColor(cor)
-                tela.setCursorPos(xBarra, y)
-                tela.write(" ")
+            if deveAcender then
+                tela.setBackgroundColor(colors.white)
+                tela.clear()
             end
         end
         
-        os.sleep(0.1)
+        os.sleep(0.2)
     end
 end
 
--- EFEITO 2: MULTIPLAS BARRAS
-function fitaBarras()
-    print("Fita com Múltiplas Barras")
+-- EFEITO 3: RESPIRAÇÃO BRANCA
+function respiracao()
+    print("Respiração Branca")
+    
+    local tempo = 0
+    
+    while true do
+        tempo = tempo + 0.1
+        
+        for i, tela in ipairs(telas) do
+            local w, h = tela.getSize()
+            
+            -- Todas as telas respiram juntas
+            tela.setBackgroundColor(colors.white)
+            tela.clear()
+        end
+        
+        -- Pausa (respiração)
+        os.sleep(0.8)
+        
+        -- Apaga
+        for i, tela in ipairs(telas) do
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+        end
+        
+        os.sleep(0.4)
+    end
+end
+
+-- EFEITO 4: BARRAS VERTICAIS BRANCAS
+function barrasVerticais()
+    print("Barras Verticais Brancas")
     
     local offset = 0
     
@@ -75,13 +116,13 @@ function fitaBarras()
             tela.setBackgroundColor(colors.black)
             tela.clear()
             
-            -- 3 barras coloridas
-            for barra = 1, 3 do
-                local x = (offset + barra * 3) % w + 1
-                local cor = cores[(i + barra) % #cores + 1]
+            -- Barras brancas verticais se movendo
+            for barra = 1, 2 do  -- 2 barras por tela
+                local x = (offset + barra * 4) % w + 1
                 
+                -- Desenha barra vertical branca
                 for y = 1, h do
-                    tela.setBackgroundColor(cor)
+                    tela.setBackgroundColor(colors.white)
                     tela.setCursorPos(x, y)
                     tela.write(" ")
                 end
@@ -92,32 +133,9 @@ function fitaBarras()
     end
 end
 
--- EFEITO 3: PREENCHIMENTO TOTAL
-function fitaCheia()
-    print("Fita com Cores Cheias")
-    
-    local corIndex = 1
-    
-    while true do
-        corIndex = corIndex + 1
-        if corIndex > #cores then corIndex = 1 end
-        
-        for i, tela in ipairs(telas) do
-            local w, h = tela.getSize()
-            local cor = cores[(corIndex + i - 2) % #cores + 1]
-            
-            -- Preenche tela inteira com uma cor
-            tela.setBackgroundColor(cor)
-            tela.clear()
-        end
-        
-        os.sleep(0.5)
-    end
-end
-
--- EFEITO 4: PONTOS DE LUZ
-function fitaPontos()
-    print("Fita com Pontos de Luz")
+-- EFEITO 5: PONTOS BRANCOS SEQUENCIAIS
+function pontosSequenciais()
+    print("Pontos Sequenciais")
     
     local tempo = 0
     
@@ -129,48 +147,121 @@ function fitaPontos()
             tela.setBackgroundColor(colors.black)
             tela.clear()
             
-            -- Pontos de luz se movendo
-            for ponto = 1, 5 do
-                local x = (tempo + ponto * 2) % w + 1
+            -- Um ponto branco que se move sequencialmente pelas telas
+            if (tempo % #telas) + 1 == i then
+                local x = math.floor(w / 2)
                 local y = math.floor(h / 2)
-                local cor = cores[(ponto + i) % #cores + 1]
                 
-                tela.setBackgroundColor(cor)
+                tela.setBackgroundColor(colors.white)
                 tela.setCursorPos(x, y)
                 tela.write(" ")
                 
-                -- Acima e abaixo
-                if y > 1 then
-                    tela.setCursorPos(x, y - 1)
-                    tela.write(" ")
-                end
-                if y < h then
-                    tela.setCursorPos(x, y + 1)
+                -- Pequeno brilho ao redor
+                tela.setCursorPos(x + 1, y)
+                tela.write(" ")
+                tela.setCursorPos(x - 1, y)
+                tela.write(" ")
+            end
+        end
+        
+        os.sleep(0.25)
+    end
+end
+
+-- EFEITO 6: GRADIENTE CINZA (Daft Punk elegante)
+function gradientCinza()
+    print("Gradiente Cinza")
+    
+    local tonsCinza = {
+        colors.black,
+        colors.gray, 
+        colors.lightGray,
+        colors.white,
+        colors.lightGray,
+        colors.gray
+    }
+    
+    local posicao = 0
+    
+    while true do
+        posicao = posicao + 1
+        
+        for i, tela in ipairs(telas) do
+            local w, h = tela.getSize()
+            
+            -- Gradiente de cinza horizontal
+            for x = 1, w do
+                local progresso = (x + posicao) % #tonsCinza
+                local cor = tonsCinza[progresso + 1]
+                
+                for y = 1, h do
+                    tela.setBackgroundColor(cor)
+                    tela.setCursorPos(x, y)
                     tela.write(" ")
                 end
             end
         end
         
-        os.sleep(0.2)
+        os.sleep(0.1)
     end
 end
 
--- Menu simples
-function menu()
-    print("\n=== FITAS LED ===")
-    print("1. Cor Deslizante")
-    print("2. Múltiplas Barras")
-    print("3. Cores Cheias")
-    print("4. Pontos de Luz")
-    print("==================")
+-- EFEITO 7: PISCADA ALEATÓRIA (não todas ligadas)
+function piscadaAleatoria()
+    print("Piscada Aleatória")
     
-    write("Escolha (1-4): ")
+    while true do
+        -- Apaga tudo
+        for i, tela in ipairs(telas) do
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+        end
+        
+        -- Acende algumas telas aleatoriamente (não todas)
+        local telasParaAcender = math.random(1, #telas - 1)  -- Nunca todas
+        
+        for a = 1, telasParaAcender do
+            local telaAleatoria = math.random(1, #telas)
+            telas[telaAleatoria].setBackgroundColor(colors.white)
+            telas[telaAleatoria].clear()
+        end
+        
+        os.sleep(0.4)
+        
+        -- Apaga
+        for i, tela in ipairs(telas) do
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+        end
+        
+        os.sleep(0.3)
+    end
+end
+
+-- Menu Daft Punk
+function menu()
+    print("\n" .. string.rep("=", 30))
+    print("DAFT PUNK - LUZ BRANCA")
+    print(string.rep("=", 30))
+    print("1. Pulso Sequencial")
+    print("2. Onda Branca")
+    print("3. Respiração")
+    print("4. Barras Verticais") 
+    print("5. Pontos Sequenciais")
+    print("6. Gradiente Cinza")
+    print("7. Piscada Aleatória")
+    print(string.rep("=", 30))
+    
+    write("Escolha (1-7): ")
     local e = read()
     
-    if e == "1" then fitaSimples()
-    elseif e == "2" then fitaBarras()
-    elseif e == "3" then fitaCheia()
-    elseif e == "4" then fitaPontos()
+    if e == "1" then pulsoSequencial()
+    elseif e == "2" then ondaBranca()
+    elseif e == "3" then respiracao()
+    elseif e == "4" then barrasVerticais()
+    elseif e == "5" then pontosSequenciais()
+    elseif e == "6" then gradientCinza()
+    elseif e == "7" then piscadaAleatoria()
     else print("Inválido!"); os.sleep(1) end
 end
 
