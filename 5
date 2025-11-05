@@ -526,9 +526,9 @@ function pulsoCorSolida()
     end
 end
 
--- EFEITO 10: CHAMAS MELHORADAS
-function chamasMelhoradas()
-    print("Chamas Melhoradas")
+-- EFEITO 10: ONDAS SINCRONIZADAS (NOVO!)
+function ondasSincronizadas()
+    print("Ondas Sincronizadas")
     print("Pressione CTRL+T para parar")
     
     local tempo = 0
@@ -537,34 +537,35 @@ function chamasMelhoradas()
     while executandoEfeito do
         tempo = tempo + 1
         
+        -- CALCULAR ONDA PARA ESTE FRAME
+        local fase = (tempo * 0.1) % (2 * math.pi)
+        
         for i, tela in ipairs(telas) do
-            local w, h = tela.getSize()
+            -- CALCULAR POSICAO NA ONDA (0 a 1)
+            local posicaoNaOnda = (i / #telas + fase) % 1
             
-            for x = 1, w do
-                for y = 1, h do
-                    local alturaBase = h * 0.7
-                    local variacao = math.sin(x * 0.2 + tempo * 0.1 + y * 0.05) * 3
-                    local alturaChama = alturaBase + variacao
-                    
-                    if y > alturaChama then
-                        local intensidade = (h - y) / (h - alturaChama)
-                        
-                        if intensidade > 0.7 then
-                            tela.setBackgroundColor(colors.yellow)
-                        elseif intensidade > 0.4 then
-                            tela.setBackgroundColor(colors.orange)
-                        else
-                            tela.setBackgroundColor(colors.red)
-                        end
-                        
-                        tela.setCursorPos(x, y)
-                        tela.write(" ")
-                    else
-                        tela.setBackgroundColor(colors.black)
-                        tela.setCursorPos(x, y)
-                        tela.write(" ")
-                    end
-                end
+            -- INTENSIDADE BASEADA NA POSICAO NA ONDA
+            local intensidade = (math.sin(posicaoNaOnda * math.pi * 2) + 1) / 2
+            
+            -- COR BASEADA NA INTENSIDADE
+            local cor
+            if modoCorAtual == "Branco" then
+                cor = colors.white
+            elseif modoCorAtual == "CorSolida" then
+                cor = corSolidaAtual
+            else
+                -- Modo colorido: muda cor baseado na posicao
+                local corIndex = math.floor(posicaoNaOnda * #modosCor.ColoridoAleatorio.cores) + 1
+                cor = modosCor.ColoridoAleatorio.cores[corIndex]
+            end
+            
+            -- APLICAR COR COM INTENSIDADE
+            if intensidade > 0.1 then
+                tela.setBackgroundColor(cor)
+                tela.clear()
+            else
+                tela.setBackgroundColor(colors.black)
+                tela.clear()
             end
         end
         
@@ -577,37 +578,36 @@ function chamasMelhoradas()
     end
 end
 
--- EFEITO 11: AGUA SIMPLES
-function aguaSimples()
-    print("Agua Simples")
+-- EFEITO 11: ONDA CENTRO PARA BORDAS (NOVO!)
+function ondaCentroBordas()
+    print("Onda Centro para Bordas")
     print("Pressione CTRL+T para parar")
     
-    local offset = 0
+    local tempo = 0
     executandoEfeito = true
     
     while executandoEfeito do
-        offset = offset + 1
+        tempo = tempo + 1
+        
+        -- CALCULAR ONDA (0 = bordas, 1 = centro)
+        local onda = (math.sin(tempo * 0.2) + 1) / 2
         
         for i, tela in ipairs(telas) do
-            local w, h = tela.getSize()
+            -- CALCULAR DISTANCIA DO CENTRO (0 a 1)
+            local distanciaCentro = math.abs((i - 1) / (#telas - 1) - 0.5) * 2
             
-            for y = 1, h do
-                local alturaOnda = math.sin(y * 0.3 + offset * 0.1) * 2 + h * 0.5
-                
-                for x = 1, w do
-                    if y <= alturaOnda then
-                        if y > alturaOnda * 0.8 then
-                            tela.setBackgroundColor(colors.blue)
-                        else
-                            tela.setBackgroundColor(colors.lightBlue)
-                        end
-                    else
-                        tela.setBackgroundColor(colors.black)
-                    end
-                    
-                    tela.setCursorPos(x, y)
-                    tela.write(" ")
-                end
+            -- INTENSIDADE: centro = 1, bordas = 0
+            local intensidade = 1 - math.abs(distanciaCentro - onda)
+            intensidade = math.max(0, math.min(1, intensidade * 2))
+            
+            -- APLICAR COR
+            if intensidade > 0.1 then
+                local cor = obterCor(i)
+                tela.setBackgroundColor(cor)
+                tela.clear()
+            else
+                tela.setBackgroundColor(colors.black)
+                tela.clear()
             end
         end
         
@@ -620,7 +620,7 @@ function aguaSimples()
     end
 end
 
--- EFEITO 12: PARTICULAS VOANDO (QUE VOCE AMOU)
+-- EFEITO 12: PARTICULAS VOANDO
 function particulasVoando()
     print("Particulas Voando")
     print("Pressione CTRL+T para parar")
@@ -710,70 +710,7 @@ function particulasVoando()
     end
 end
 
--- EFEITO 13: COBRINHA ENTRE TELAS
-function cobrinhaEntreTelas()
-    print("Cobrinha entre Telas")
-    print("Pressione CTRL+T para parar")
-    
-    local cobrinha = {
-        posicao = 1,
-        direcao = 1,
-        comprimento = 3
-    }
-    
-    local historico = {}
-    executandoEfeito = true
-    
-    while executandoEfeito do
-        for i, tela in ipairs(telas) do
-            tela.setBackgroundColor(colors.black)
-            tela.clear()
-        end
-        
-        table.insert(historico, cobrinha.posicao)
-        
-        if #historico > cobrinha.comprimento then
-            table.remove(historico, 1)
-        end
-        
-        for i, pos in ipairs(historico) do
-            if telas[pos] then
-                local intensidade = i / #historico
-                local cor
-                
-                if intensidade > 0.7 then
-                    cor = colors.green
-                elseif intensidade > 0.4 then
-                    cor = colors.lime
-                else
-                    cor = colors.yellow
-                end
-                
-                telas[pos].setBackgroundColor(cor)
-                telas[pos].clear()
-            end
-        end
-        
-        cobrinha.posicao = cobrinha.posicao + cobrinha.direcao
-        
-        if cobrinha.posicao > #telas then
-            cobrinha.posicao = #telas - 1
-            cobrinha.direcao = -1
-        elseif cobrinha.posicao < 1 then
-            cobrinha.posicao = 2
-            cobrinha.direcao = 1
-        end
-        
-        os.sleep(aplicarVelocidade(0.3))
-    end
-    
-    for i, tela in ipairs(telas) do
-        tela.setBackgroundColor(colors.black)
-        tela.clear()
-    end
-end
-
--- EFEITO 14: STROBE TODAS AS TELAS
+-- EFEITO 13: STROBE TODAS AS TELAS
 function strobeTodasTelas()
     print("Strobe Todas as Telas")
     print("Pressione CTRL+T para parar")
@@ -910,16 +847,15 @@ function menuPrincipal()
     print("7. Piscada Aleatoria")
     print("8. Grupos Sequenciais")
     print("9. Pulso Cor Solida")
-    print("10. Chamas Melhoradas")
-    print("11. Agua Simples")
+    print("10. Ondas Sincronizadas")
+    print("11. Onda Centro para Bordas")
     print("12. Particulas Voando")
-    print("13. Cobrinha entre Telas")
-    print("14. Strobe Todas as Telas")
-    print("15. Trocar Configuracoes")
+    print("13. Strobe Todas as Telas")
+    print("14. Trocar Configuracoes")
     print("0. Sair")
     print(string.rep("=", 50))
     
-    write("Escolha o efeito (1-15, 0=sair): ")
+    write("Escolha o efeito (1-14, 0=sair): ")
     local escolha = read()
     
     executandoEfeito = true
@@ -933,12 +869,11 @@ function menuPrincipal()
     elseif escolha == "7" then piscadaAleatoria()
     elseif escolha == "8" then gruposSequenciais()
     elseif escolha == "9" then pulsoCorSolida()
-    elseif escolha == "10" then chamasMelhoradas()
-    elseif escolha == "11" then aguaSimples()
+    elseif escolha == "10" then ondasSincronizadas()
+    elseif escolha == "11" then ondaCentroBordas()
     elseif escolha == "12" then particulasVoando()
-    elseif escolha == "13" then cobrinhaEntreTelas()
-    elseif escolha == "14" then strobeTodasTelas()
-    elseif escolha == "15" then return true
+    elseif escolha == "13" then strobeTodasTelas()
+    elseif escolha == "14" then return true
     elseif escolha == "0" then 
         for i, tela in ipairs(telas) do
             tela.setBackgroundColor(colors.black)
