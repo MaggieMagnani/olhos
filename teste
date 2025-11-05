@@ -1,0 +1,207 @@
+-- =============================================
+-- FITAS LED - GRADIENTE SUAVE
+-- =============================================
+
+print("=== FITAS LED INICIADAS ===")
+
+-- Encontra as 4 telas em linha reta
+local telas = {peripheral.find("monitor")}
+if not telas[1] then
+    telas = {telas}
+end
+
+-- Pega apenas 4 telas (ou quantas tiver)
+if #telas > 4 then
+    local temp = {}
+    for i = 1, 4 do temp[i] = telas[i] end
+    telas = temp
+end
+
+print("Telas para fita LED: " .. #telas)
+
+-- Configura todas as telas
+for i, tela in ipairs(telas) do
+    tela.setTextScale(0.5)
+end
+
+-- Cores para o gradiente (transição suave)
+local coresGradiente = {
+    colors.red,      -- Vermelho
+    colors.orange,   -- Laranja  
+    colors.yellow,   -- Amarelo
+    colors.lime,     -- Verde limão
+    colors.green,    -- Verde
+    colors.cyan,     -- Ciano
+    colors.blue,     -- Azul
+    colors.purple,   -- Roxo
+    colors.pink,     -- Rosa
+    colors.magenta   -- Magenta
+}
+
+-- Função para fita LED com gradiente
+function fitaLedGradiente()
+    print("Fita LED com Gradiente Ativada")
+    
+    local posicao = 0
+    local velocidade = 0.3  -- Controla velocidade do efeito
+    
+    while true do
+        posicao = posicao + velocidade
+        
+        for i, tela in ipairs(telas) do
+            local w, h = tela.getSize()
+            
+            -- Para cada tela, calcula uma parte do gradiente
+            local inicioCor = ((posicao + i * 2) % #coresGradiente)
+            
+            -- Preenche a tela com gradiente horizontal
+            for x = 1, w do
+                -- Calcula a cor baseada na posição
+                local progresso = (x / w + inicioCor / #coresGradiente) % 1
+                local indiceCor = math.floor(progresso * #coresGradiente) + 1
+                local cor = coresGradiente[indiceCor]
+                
+                -- Pinta toda a coluna com a cor
+                for y = 1, h do
+                    tela.setBackgroundColor(cor)
+                    tela.setCursorPos(x, y)
+                    tela.write(" ")
+                end
+            end
+        end
+        
+        os.sleep(0.1)
+    end
+end
+
+-- Função alternativa: onda de cor contínua
+function fitaLedOnda()
+    print("Fita LED em Onda Ativada")
+    
+    local tempo = 0
+    
+    while true do
+        tempo = tempo + 0.2
+        
+        for i, tela in ipairs(telas) do
+            local w, h = tela.getSize()
+            
+            -- Cria onda de cor que atravessa as telas
+            for x = 1, w do
+                -- Calcula a posição na onda (considera a tela atual)
+                local posicaoOnda = (x / w + tempo * 0.1 + i * 0.25) % 1
+                local indiceCor = math.floor(posicaoOnda * #coresGradiente) + 1
+                local cor = coresGradiente[indiceCor]
+                
+                -- Pinta a coluna
+                for y = 1, h do
+                    tela.setBackgroundColor(cor)
+                    tela.setCursorPos(x, y)
+                    tela.write(" ")
+                end
+            end
+        end
+        
+        os.sleep(0.1)
+    end
+end
+
+-- Função: listras coloridas deslizantes
+function fitaLedListras()
+    print("Fita LED com Listras Ativada")
+    
+    local offset = 0
+    local larguraListra = 3  -- Largura de cada listra colorida
+    
+    while true do
+        offset = offset + 1
+        
+        for i, tela in ipairs(telas) do
+            local w, h = tela.getSize()
+            
+            for x = 1, w do
+                -- Calcula qual listra está nesta posição
+                local posListra = math.floor((x + offset) / larguraListra) % #coresGradiente
+                local cor = coresGradiente[posListra + 1]
+                
+                -- Pinta a listra
+                for y = 1, h do
+                    tela.setBackgroundColor(cor)
+                    tela.setCursorPos(x, y)
+                    tela.write(" ")
+                end
+            end
+        end
+        
+        os.sleep(0.15)
+    end
+end
+
+-- Função: respiração de cor
+function fitaLedRespirar()
+    print("Fita LED Respirando Ativada")
+    
+    local tempo = 0
+    
+    while true do
+        tempo = tempo + 0.1
+        
+        for i, tela in ipairs(telas) do
+            local w, h = tela.getSize()
+            
+            -- Calcula intensidade do "respirar"
+            local intensidade = (math.sin(tempo) + 1) / 2  -- Vai de 0 a 1
+            
+            -- Seleciona cor base baseada no tempo
+            local corBase = math.floor((tempo * 0.5) % #coresGradiente) + 1
+            local cor = coresGradiente[corBase]
+            
+            -- Aplica intensidade (mapeando para cores mais escuras/claras)
+            tela.setBackgroundColor(cor)
+            tela.clear()
+        end
+        
+        os.sleep(0.1)
+    end
+end
+
+-- Menu para escolher o tipo de fita LED
+function menuFitaLED()
+    print("\n" .. string.rep("=", 40))
+    print("FITAS LED - 4 TELAS EM LINHA")
+    print(string.rep("=", 40))
+    print("1. Gradiente Suave")
+    print("2. Onda de Cor") 
+    print("3. Listras Deslizantes")
+    print("4. Efeito Respiração")
+    print(string.rep("=", 40))
+    
+    write("Escolha o efeito de fita LED (1-4): ")
+    local escolha = read()
+    
+    if escolha == "1" then
+        fitaLedGradiente()
+    elseif escolha == "2" then
+        fitaLedOnda()
+    elseif escolha == "3" then
+        fitaLedListras()
+    elseif escolha == "4" then
+        fitaLedRespirar()
+    else
+        print("Opção inválida!")
+        os.sleep(1)
+    end
+end
+
+-- Programa principal
+function main()
+    print("Sistema de Fitas LED Iniciado")
+    print("4 telas formando fita LED contínua")
+    
+    while true do
+        menuFitaLED()
+    end
+end
+
+-- Inicia as fitas LED
+main()
