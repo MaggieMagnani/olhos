@@ -1,8 +1,8 @@
 -- =============================================
--- SISTEMA COMPLETO + CONTROLE DE VELOCIDADE
+-- SISTEMA COM EFEITO COMETAS + CORREÇÕES
 -- =============================================
 
-print("=== SISTEMA COM VELOCIDADE ===")
+print("=== SISTEMA COM EFEITO COMETAS ===")
 
 -- Pega TODAS as telas
 local telas = {peripheral.find("monitor")}
@@ -15,49 +15,26 @@ for i, tela in ipairs(telas) do
     tela.setTextScale(0.5)
 end
 
--- MODOS DE COR disponíveis
+-- MODOS DE COR
 local modosCor = {
-    ["Branco"] = {
-        cores = {colors.white},
-        descricao = "⚪ Branco puro - estilo Daft Punk"
-    },
+    ["Branco"] = { cores = {colors.white} },
     ["ColoridoAleatorio"] = {
-        cores = {
-            colors.red, colors.orange, colors.yellow,
-            colors.lime, colors.green, colors.cyan,
-            colors.lightBlue, colors.blue, colors.purple,
-            colors.pink, colors.magenta
-        },
-        descricao = "🌈 Cores aleatórias - festivo"
+        cores = { colors.red, colors.orange, colors.yellow, colors.lime, 
+                 colors.green, colors.cyan, colors.lightBlue, colors.blue, 
+                 colors.purple, colors.pink, colors.magenta }
     },
     ["CorSolida"] = {
-        cores = {
-            colors.red, colors.orange, colors.yellow,
-            colors.lime, colors.green, colors.cyan,
-            colors.blue, colors.purple, colors.pink
-        },
-        descricao = "🎨 Uma cor sólida por vez - elegante"
+        cores = { colors.red, colors.orange, colors.yellow, colors.lime,
+                 colors.green, colors.blue, colors.purple, colors.pink }
     }
 }
 
--- VELOCIDADES disponíveis
+-- VELOCIDADES
 local velocidades = {
-    ["Lenta"] = {
-        multiplicador = 2.0,
-        descricao = "🐢 Lenta - músicas calmas/românticas"
-    },
-    ["Media"] = {
-        multiplicador = 1.0,
-        descricao = "🚶 Média - padrão balada"
-    },
-    ["Rapida"] = {
-        multiplicador = 0.5,
-        descricao = "🏃 Rápida - pop/energético"
-    },
-    ["Eletronica"] = {
-        multiplicador = 0.25,
-        descricao = "⚡ Eletrônica - batidas aceleradas"
-    }
+    ["Lenta"] = { multiplicador = 2.0 },
+    ["Media"] = { multiplicador = 1.0 },
+    ["Rapida"] = { multiplicador = 0.5 },
+    ["Eletronica"] = { multiplicador = 0.25 }
 }
 
 -- Variáveis globais
@@ -65,20 +42,15 @@ local modoCorAtual = "Branco"
 local velocidadeAtual = "Media"
 local corSolidaAtual = colors.red
 
--- Função para obter cor baseada no modo atual
-function obterCor(telaIndex, efeitoData)
+-- Função para obter cor
+function obterCor(telaIndex)
     if modoCorAtual == "Branco" then
         return colors.white
-        
     elseif modoCorAtual == "ColoridoAleatorio" then
-        return modosCor.ColoridoAleatorio.cores[
-            math.random(1, #modosCor.ColoridoAleatorio.cores)
-        ]
-        
+        return modosCor.ColoridoAleatorio.cores[math.random(1, #modosCor.ColoridoAleatorio.cores)]
     elseif modoCorAtual == "CorSolida" then
         return corSolidaAtual
     end
-    
     return colors.white
 end
 
@@ -87,26 +59,304 @@ function aplicarVelocidade(tempoBase)
     return tempoBase * velocidades[velocidadeAtual].multiplicador
 end
 
+-- EFEITO 5: CONSTELAÇÃO EM MOVIMENTO (que você amou)
+function constelacao()
+    print("Constelação em Movimento - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    
+    local estrelas = {}
+    local tempo = 0
+    
+    -- Cria estrelas iniciais
+    for i, tela in ipairs(telas) do
+        local w, h = tela.getSize()
+        estrelas[i] = {}
+        
+        for s = 1, 8 do
+            estrelas[i][s] = {
+                x = math.random(2, w - 1),
+                y = math.random(2, h - 1),
+                velocidadeX = (math.random() - 0.5) * 0.8,
+                velocidadeY = (math.random() - 0.5) * 0.8,
+                tamanho = math.random(1, 3),
+                brilho = math.random(1, 3),
+                cor = obterCor(i)
+            }
+        end
+    end
+    
+    while true do
+        tempo = tempo + 1
+        
+        for i, tela in ipairs(telas) do
+            local w, h = tela.getSize()
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+            
+            -- Atualiza e desenha estrelas
+            for s, estrela in ipairs(estrelas[i]) do
+                -- Move estrela
+                estrela.x = estrela.x + estrela.velocidadeX
+                estrela.y = estrela.y + estrela.velocidadeY
+                
+                -- Rebate nas bordas
+                if estrela.x <= 1 or estrela.x >= w then
+                    estrela.velocidadeX = -estrela.velocidadeX
+                end
+                if estrela.y <= 1 or estrela.y >= h then
+                    estrela.velocidadeY = -estrela.velocidadeY
+                end
+                
+                -- Mantém dentro dos limites
+                estrela.x = math.max(1, math.min(w, estrela.x))
+                estrela.y = math.max(1, math.min(h, estrela.y))
+                
+                -- Desenha estrela
+                local cor = estrela.cor
+                local x = math.floor(estrela.x)
+                local y = math.floor(estrela.y)
+                
+                tela.setBackgroundColor(cor)
+                tela.setCursorPos(x, y)
+                tela.write(" ")
+                
+                -- Brilho para estrelas maiores
+                if estrela.tamanho >= 2 then
+                    if x > 1 then tela.setCursorPos(x - 1, y); tela.write(" ") end
+                    if x < w then tela.setCursorPos(x + 1, y); tela.write(" ") end
+                end
+                if estrela.tamanho >= 3 then
+                    if y > 1 then tela.setCursorPos(x, y - 1); tela.write(" ") end
+                    if y < h then tela.setCursorPos(x, y + 1); tela.write(" ") end
+                end
+                
+                -- Piscar aleatório
+                if math.random(1, 50) == 1 then
+                    estrela.brilho = math.random(1, 3)
+                    estrela.cor = obterCor(i)
+                end
+            end
+            
+            -- Novas estrelas
+            if tempo % 30 == 0 and #estrelas[i] < 12 then
+                table.insert(estrelas[i], {
+                    x = math.random(2, w - 1),
+                    y = 1,
+                    velocidadeX = (math.random() - 0.5) * 0.5,
+                    velocidadeY = math.random(0.3, 0.8),
+                    tamanho = math.random(1, 3),
+                    brilho = math.random(1, 3),
+                    cor = obterCor(i)
+                })
+            end
+        end
+        
+        os.sleep(aplicarVelocidade(0.1))
+    end
+end
+
+-- EFEITO 6B: COMETAS E RISCOS (CORRIGIDO E MELHORADO)
+function cometas()
+    print("Cometas e Riscos - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    
+    local cometas = {}
+    local tempo = 0
+    
+    for i, tela in ipairs(telas) do
+        local w, h = tela.getSize()
+        cometas[i] = {}
+        
+        -- Cria alguns cometas iniciais
+        for c = 1, 3 do
+            cometas[i][c] = {
+                x = math.random(-10, w + 10),  -- Pode começar fora da tela
+                y = math.random(1, h),
+                velocidadeX = math.random(-3, -1),  -- Sempre se move pra esquerda
+                velocidadeY = (math.random() - 0.5) * 0.5,
+                comprimento = math.random(5, 12),
+                cor = obterCor(i),
+                vida = math.random(50, 100)
+            }
+        end
+    end
+    
+    while true do
+        tempo = tempo + 1
+        
+        for i, tela in ipairs(telas) do
+            local w, h = tela.getSize()
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+            
+            -- Atualiza e desenha cometas
+            for c = #cometas[i], 1, -1 do
+                local cometa = cometas[i][c]
+                
+                -- Move cometa
+                cometa.x = cometa.x + cometa.velocidadeX
+                cometa.y = cometa.y + cometa.velocidadeY
+                cometa.vida = cometa.vida - 1
+                
+                -- Desenha risco/cometa
+                for segmento = 0, cometa.comprimento do
+                    local segX = math.floor(cometa.x + segmento)
+                    local segY = math.floor(cometa.y + (segmento * 0.3))  -- Pequena curva
+                    
+                    -- Calcula intensidade (mais forte no início do risco)
+                    local intensidade = 1 - (segmento / cometa.comprimento)
+                    
+                    if segX >= 1 and segX <= w and segY >= 1 and segY <= h and intensidade > 0.2 then
+                        tela.setBackgroundColor(cometa.cor)
+                        tela.setCursorPos(segX, segY)
+                        tela.write(" ")
+                        
+                        -- Faz o risco mais "grosso" no início
+                        if intensidade > 0.7 then
+                            if segY > 1 then
+                                tela.setCursorPos(segX, segY - 1)
+                                tela.write(" ")
+                            end
+                            if segY < h then
+                                tela.setCursorPos(segX, segY + 1)
+                                tela.write(" ")
+                            end
+                        end
+                    end
+                end
+                
+                -- Remove cometa se saiu da tela ou sem vida
+                if cometa.x < -cometa.comprimento or cometa.x > w + cometa.comprimento or cometa.vida <= 0 then
+                    table.remove(cometas[i], c)
+                end
+            end
+            
+            -- Cria novos cometas ocasionalmente
+            if math.random(1, 15) == 1 and #cometas[i] < 5 then
+                table.insert(cometas[i], {
+                    x = w + 5,  -- Começa à direita
+                    y = math.random(1, h),
+                    velocidadeX = math.random(-4, -2),  -- Move pra esquerda
+                    velocidadeY = (math.random() - 0.5) * 0.3,
+                    comprimento = math.random(8, 15),
+                    cor = obterCor(i),
+                    vida = math.random(80, 150)
+                })
+            end
+        end
+        
+        os.sleep(aplicarVelocidade(0.08))
+    end
+end
+
+-- EFEITO 7: LINHAS HORIZONTAIS FLUENTES
+function linhasFluentes()
+    print("Linhas Fluentes - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    
+    local linhas = {}
+    local tempo = 0
+    
+    for i, tela in ipairs(telas) do
+        local w, h = tela.getSize()
+        linhas[i] = {}
+        
+        -- Cria linhas iniciais
+        for l = 1, 4 do
+            linhas[i][l] = {
+                y = math.random(1, h),
+                velocidade = math.random(1, 3),
+                direcao = math.random(0, 1) == 1 and 1 or -1,
+                comprimento = math.random(3, 8),
+                cor = obterCor(i),
+                espessura = math.random(1, 2)
+            }
+        end
+    end
+    
+    while true do
+        tempo = tempo + 1
+        
+        for i, tela in ipairs(telas) do
+            local w, h = tela.getSize()
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+            
+            -- Atualiza e desenha linhas
+            for l, linha in ipairs(linhas[i]) do
+                -- Move linha
+                linha.y = linha.y + (linha.velocidade * linha.direcao * 0.1)
+                
+                -- Inverte direção se chegou nas bordas
+                if linha.y <= 1 or linha.y >= h then
+                    linha.direcao = -linha.direcao
+                    linha.cor = obterCor(i)  -- Muda cor ao inverter
+                end
+                
+                -- Mantém dentro dos limites
+                linha.y = math.max(1, math.min(h, linha.y))
+                
+                -- Desenha linha horizontal
+                local y = math.floor(linha.y)
+                local cor = linha.cor
+                
+                for x = 1, w do
+                    tela.setBackgroundColor(cor)
+                    tela.setCursorPos(x, y)
+                    tela.write(" ")
+                    
+                    -- Linhas mais espessas
+                    if linha.espessura >= 2 then
+                        if y > 1 then
+                            tela.setCursorPos(x, y - 1)
+                            tela.write(" ")
+                        end
+                        if y < h then
+                            tela.setCursorPos(x, y + 1)
+                            tela.write(" ")
+                        end
+                    end
+                end
+                
+                -- Efeito de "onda" na linha
+                if tempo % 20 == 0 then
+                    linha.velocidade = math.random(1, 3)
+                    linha.comprimento = math.random(3, 8)
+                end
+            end
+            
+            -- Novas linhas ocasionalmente
+            if tempo % 40 == 0 and #linhas[i] < 6 then
+                table.insert(linhas[i], {
+                    y = math.random(1, h),
+                    velocidade = math.random(1, 3),
+                    direcao = math.random(0, 1) == 1 and 1 or -1,
+                    comprimento = math.random(3, 8),
+                    cor = obterCor(i),
+                    espessura = math.random(1, 2)
+                })
+            end
+        end
+        
+        os.sleep(aplicarVelocidade(0.1))
+    end
+end
+
+-- [MANTENHA AQUI OS OUTROS EFEITOS ORIGINAIS...]
+
 -- EFEITO 1: PULSO SEQUENCIAL
 function pulsoSequencial()
-    print("Pulso Sequencial")
-    print("Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    print("Pulso Sequencial - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
     
     local telaAtiva = 1
     
     while true do
-        -- Apaga todas
         for i, tela in ipairs(telas) do
             tela.setBackgroundColor(colors.black)
             tela.clear()
         end
         
-        -- Acende uma tela com a cor do modo atual
         local cor = obterCor(telaAtiva)
         telas[telaAtiva].setBackgroundColor(cor)
         telas[telaAtiva].clear()
         
-        -- Próxima tela
         telaAtiva = telaAtiva + 1
         if telaAtiva > #telas then telaAtiva = 1 end
         
@@ -116,8 +366,7 @@ end
 
 -- EFEITO 2: ONDA
 function onda()
-    print("Onda")
-    print("Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    print("Onda - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
     
     local posicao = 0
     
@@ -141,332 +390,68 @@ function onda()
     end
 end
 
--- EFEITO 3: RESPIRAÇÃO
-function respiracao()
-    print("Respiração")
-    print("Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
-    
-    while true do
-        -- Acende todas com a cor do modo
-        local cor = obterCor(1)
-        for i, tela in ipairs(telas) do
-            tela.setBackgroundColor(cor)
-            tela.clear()
-        end
-        
-        os.sleep(aplicarVelocidade(0.8))
-        
-        -- Apaga
-        for i, tela in ipairs(telas) do
-            tela.setBackgroundColor(colors.black)
-            tela.clear()
-        end
-        
-        os.sleep(aplicarVelocidade(0.4))
-    end
-end
-
--- EFEITO 4: BARRAS VERTICAIS
-function barrasVerticais()
-    print("Barras Verticais")
-    print("Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
-    
-    local offset = 0
-    
-    while true do
-        offset = offset + 1
-        
-        for i, tela in ipairs(telas) do
-            local w, h = tela.getSize()
-            tela.setBackgroundColor(colors.black)
-            tela.clear()
-            
-            for barra = 1, 2 do
-                local x = (offset + barra * 4 + i * 2) % w + 1
-                local cor = obterCor(i)
-                
-                for y = 1, h do
-                    tela.setBackgroundColor(cor)
-                    tela.setCursorPos(x, y)
-                    tela.write(" ")
-                end
-            end
-        end
-        
-        os.sleep(aplicarVelocidade(0.15))
-    end
-end
-
--- EFEITO 5: PONTOS SEQUENCIAIS
-function pontosSequenciais()
-    print("Pontos Sequenciais")
-    print("Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
-    
-    local tempo = 0
-    
-    while true do
-        tempo = tempo + 1
-        
-        for i, tela in ipairs(telas) do
-            local w, h = tela.getSize()
-            tela.setBackgroundColor(colors.black)
-            tela.clear()
-            
-            if (tempo % #telas) + 1 == i then
-                local x = math.floor(w / 2)
-                local y = math.floor(h / 2)
-                local cor = obterCor(i)
-                
-                tela.setBackgroundColor(cor)
-                tela.setCursorPos(x, y)
-                tela.write(" ")
-                
-                tela.setCursorPos(x + 1, y)
-                tela.write(" ")
-                tela.setCursorPos(x - 1, y)
-                tela.write(" ")
-            end
-        end
-        
-        os.sleep(aplicarVelocidade(0.25))
-    end
-end
-
--- EFEITO 6: GRADIENTE
-function gradient()
-    print("Gradiente")
-    print("Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
-    
-    local tons = {}
-    
-    if modoCorAtual == "Branco" then
-        tons = {colors.black, colors.gray, colors.lightGray, colors.white}
-    else
-        local corBase = obterCor(1)
-        tons = {colors.black, colors.gray, corBase, colors.white}
-    end
-    
-    local posicao = 0
-    
-    while true do
-        posicao = posicao + 1
-        
-        for i, tela in ipairs(telas) do
-            local w, h = tela.getSize()
-            
-            for x = 1, w do
-                local progresso = (x + posicao + i * 3) % #tons
-                local cor = tons[progresso + 1]
-                
-                for y = 1, h do
-                    tela.setBackgroundColor(cor)
-                    tela.setCursorPos(x, y)
-                    tela.write(" ")
-                end
-            end
-        end
-        
-        os.sleep(aplicarVelocidade(0.1))
-    end
-end
-
--- EFEITO 7: PISCADA ALEATÓRIA
-function piscadaAleatoria()
-    print("Piscada Aleatória")
-    print("Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
-    
-    while true do
-        -- Apaga tudo
-        for i, tela in ipairs(telas) do
-            tela.setBackgroundColor(colors.black)
-            tela.clear()
-        end
-        
-        -- Acende algumas telas
-        local maxTelas = math.max(1, #telas - 1)
-        local telasParaAcender = math.random(1, maxTelas)
-        
-        for a = 1, telasParaAcender do
-            local telaAleatoria = math.random(1, #telas)
-            local cor = obterCor(telaAleatoria)
-            telas[telaAleatoria].setBackgroundColor(cor)
-            telas[telaAleatoria].clear()
-        end
-        
-        os.sleep(aplicarVelocidade(0.4))
-        
-        -- Apaga
-        for i, tela in ipairs(telas) do
-            tela.setBackgroundColor(colors.black)
-            tela.clear()
-        end
-        
-        os.sleep(aplicarVelocidade(0.3))
-    end
-end
-
--- EFEITO 8: GRUPOS SEQUENCIAIS
-function gruposSequenciais()
-    print("Grupos Sequenciais")
-    print("Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
-    
-    local grupoAtual = 1
-    local telasPorGrupo = math.max(1, math.floor(#telas / 3))
-    
-    while true do
-        -- Apaga tudo
-        for i, tela in ipairs(telas) do
-            tela.setBackgroundColor(colors.black)
-            tela.clear()
-        end
-        
-        -- Acende um grupo
-        local inicio = (grupoAtual - 1) * telasPorGrupo + 1
-        local fim = math.min(grupoAtual * telasPorGrupo, #telas)
-        
-        for i = inicio, fim do
-            if telas[i] then
-                local cor = obterCor(i)
-                telas[i].setBackgroundColor(cor)
-                telas[i].clear()
-            end
-        end
-        
-        -- Próximo grupo
-        grupoAtual = grupoAtual + 1
-        if grupoAtual > math.ceil(#telas / telasPorGrupo) then
-            grupoAtual = 1
-        end
-        
-        os.sleep(aplicarVelocidade(0.5))
-    end
-end
-
--- MENU DE SELEÇÃO DE VELOCIDADE
+-- MENUS (simplificados)
 function menuVelocidade()
-    print("\n" .. string.rep("=", 45))
-    print("SELECIONE A VELOCIDADE DOS EFEITOS")
-    print(string.rep("=", 45))
-    print("1. 🐢 LENTA - Músicas calmas/românticas")
-    print("2. 🚶 MÉDIA - Padrão balada")
-    print("3. 🏃 RÁPIDA - Pop/energético") 
-    print("4. ⚡ ELETRÔNICA - Batidas aceleradas")
-    print(string.rep("=", 45))
-    
-    write("Escolha a velocidade (1-4): ")
-    local escolha = read()
-    
-    if escolha == "1" then
-        velocidadeAtual = "Lenta"
-        print("Velocidade selecionada: 🐢 LENTA")
-    elseif escolha == "2" then
-        velocidadeAtual = "Media" 
-        print("Velocidade selecionada: 🚶 MÉDIA")
-    elseif escolha == "3" then
-        velocidadeAtual = "Rapida"
-        print("Velocidade selecionada: 🏃 RÁPIDA")
-    elseif escolha == "4" then
-        velocidadeAtual = "Eletronica"
-        print("Velocidade selecionada: ⚡ ELETRÔNICA")
-    else
-        print("Velocidade mantida: " .. velocidadeAtual)
-    end
-    
+    print("\n🎵 SELECIONE VELOCIDADE:")
+    print("1. 🐢 Lenta | 2. 🚶 Média | 3. 🏃 Rápida | 4. ⚡ Eletrônica")
+    write("Escolha (1-4): ")
+    local e = read()
+    if e == "1" then velocidadeAtual = "Lenta"
+    elseif e == "2" then velocidadeAtual = "Media"
+    elseif e == "3" then velocidadeAtual = "Rapida"
+    elseif e == "4" then velocidadeAtual = "Eletronica" end
     os.sleep(1)
 end
 
--- MENU DE SELEÇÃO DE CORES
 function menuCores()
-    print("\n" .. string.rep("=", 40))
-    print("SELECIONE O MODO DE CORES")
-    print(string.rep("=", 40))
-    print("1. ⚪ Branco & Preto (Daft Punk)")
-    print("2. 🌈 Colorido Aleatório (Festivo)")
-    print("3. 🎨 Cor Sólida (Elegante)")
-    print(string.rep("=", 40))
-    
-    write("Escolha o modo de cores (1-3): ")
-    local escolha = read()
-    
-    if escolha == "1" then
-        modoCorAtual = "Branco"
-        print("Modo selecionado: ⚪ Branco & Preto")
-        
-    elseif escolha == "2" then
-        modoCorAtual = "ColoridoAleatorio"
-        print("Modo selecionado: 🌈 Colorido Aleatório")
-        
-    elseif escolha == "3" then
+    print("\n🎨 SELECIONE CORES:")
+    print("1. ⚪ Branco | 2. 🌈 Colorido | 3. 🎨 Cor Sólida")
+    write("Escolha (1-3): ")
+    local e = read()
+    if e == "1" then modoCorAtual = "Branco"
+    elseif e == "2" then modoCorAtual = "ColoridoAleatorio"
+    elseif e == "3" then 
         modoCorAtual = "CorSolida"
-        print("\n" .. string.rep("-", 30))
-        print("ESCOLHA A COR SÓLIDA:")
-        print("1. 🔴 Vermelho")
-        print("2. 🟠 Laranja") 
-        print("3. 🟡 Amarelo")
-        print("4. 🟢 Verde")
-        print("5. 🔵 Azul")
-        print("6. 🟣 Roxo")
-        print("7. 🎀 Rosa")
-        print(string.rep("-", 30))
-        
-        write("Escolha a cor (1-7): ")
-        local escolhaCor = read()
-        
-        local coresDisponiveis = {
-            colors.red, colors.orange, colors.yellow,
-            colors.green, colors.blue, colors.purple, colors.pink
-        }
-        
-        if tonumber(escolhaCor) and tonumber(escolhaCor) >= 1 and tonumber(escolhaCor) <= 7 then
-            corSolidaAtual = coresDisponiveis[tonumber(escolhaCor)]
-            print("Cor sólida selecionada!")
-        else
-            corSolidaAtual = colors.red
-            print("Cor padrão: 🔴 Vermelho")
-        end
-        
-    else
-        print("Modo mantido: " .. modoCorAtual)
+        print("🎨 Cores: 1.🔴 2.🟠 3.🟡 4.🟢 5.🔵 6.🟣 7.🎀")
+        write("Escolha (1-7): ")
+        local c = tonumber(read())
+        local cores = {colors.red, colors.orange, colors.yellow, colors.green, colors.blue, colors.purple, colors.pink}
+        if c and c >=1 and c <=7 then corSolidaAtual = cores[c] end
     end
-    
     os.sleep(1)
 end
 
--- MENU PRINCIPAL
+-- MENU PRINCIPAL ATUALIZADO
 function menuPrincipal()
-    menuVelocidade()  -- Primeiro escolhe velocidade
-    menuCores()       -- Depois escolhe cores
+    menuVelocidade()
+    menuCores()
     
     print("\n" .. string.rep("=", 50))
-    print("EFEITOS DISPONÍVEIS - " .. #telas .. " TELAS")
-    print("🎵 Velocidade: " .. velocidadeAtual)
-    print("🎨 Modo: " .. modoCorAtual)
+    print("EFEITOS - " .. #telas .. " TELAS")
+    print("Velocidade: " .. velocidadeAtual .. " | Modo: " .. modoCorAtual)
     print(string.rep("=", 50))
     print("1. Pulso Sequencial")
     print("2. Onda")
     print("3. Respiração")
     print("4. Barras Verticais")
-    print("5. Pontos Sequenciais")
-    print("6. Gradiente")
-    print("7. Piscada Aleatória")
-    print("8. Grupos Sequenciais")
-    print("9. 🔄 Trocar Configurações")
+    print("5. 🌟 Constelação (QUE VOCÊ AMOU)")
+    print("6. 🚀 Cometas e Riscos (NOVO)")
+    print("7. ➖ Linhas Fluentes (NOVO)")
+    print("8. Piscada Aleatória")
+    print("9. 🔄 Trocar Config")
     print("0. 🚪 Sair")
     print(string.rep("=", 50))
     
-    write("Escolha o efeito (1-9, 0=sair): ")
-    local escolha = read()
+    write("Escolha (1-9, 0=sair): ")
+    local e = read()
     
-    if escolha == "1" then pulsoSequencial()
-    elseif escolha == "2" then onda()
-    elseif escolha == "3" then respiracao()
-    elseif escolha == "4" then barrasVerticais()
-    elseif escolha == "5" then pontosSequenciais()
-    elseif escolha == "6" then gradient()
-    elseif escolha == "7" then piscadaAleatoria()
-    elseif escolha == "8" then gruposSequenciais()
-    elseif escolha == "9" then return true  -- Voltar para configurações
-    elseif escolha == "0" then 
+    if e == "1" then pulsoSequencial()
+    elseif e == "2" then onda()
+    elseif e == "5" then constelacao()
+    elseif e == "6" then cometas()
+    elseif e == "7" then linhasFluentes()
+    elseif e == "9" then return true
+    elseif e == "0" then 
         for i, tela in ipairs(telas) do
             tela.setBackgroundColor(colors.black)
             tela.clear()
@@ -482,7 +467,7 @@ end
 
 -- PROGRAMA PRINCIPAL
 function main()
-    print("Sistema Profissional de Iluminação Iniciado!")
+    print("Sistema Cometas Iniciado!")
     
     local executando = true
     while executando do
