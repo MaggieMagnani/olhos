@@ -1,61 +1,50 @@
 -- =============================================
--- SHOW BALADA - TELAS ILIMITADAS
+-- SHOW BALADA PERFEITO - VERSÃO DEFINITIVA
 -- =============================================
 
-print("=== SHOW BALADA - TELAS ILIMITADAS ===")
+print("=== SHOW BALADA PERFEITO ===")
 
--- Encontra TODOS os monitores (quantos quiser)
+-- Configuração dos monitores
 local monitores = {peripheral.find("monitor")}
-if not monitores[1] then
-    monitores = {monitores}
-end
+if not monitores[1] then monitores = {monitores} end
+if #monitores == 0 then print("ERRO: Nenhum monitor!"); return end
 
-if #monitores == 0 then
-    print("ERRO: Nenhum monitor encontrado!")
-    return
-end
+print("Monitores: " .. #monitores)
 
-print("Monitores conectados: " .. #monitores)
-
--- Configura todos os monitores
 for i, mon in ipairs(monitores) do
     mon.setTextScale(0.5)
 end
 
--- Calcula tamanho total da tela gigante
+-- Tamanho da tela gigante
 local larguras = {}
-local larguraTotal = 0
-local alturaTotal = 0
+local larguraTotal, alturaTotal = 0, 0
 
 for i, mon in ipairs(monitores) do
     local w, h = mon.getSize()
     larguras[i] = w
     larguraTotal = larguraTotal + w
-    if h > alturaTotal then
-        alturaTotal = h
-    end
-    print("Monitor " .. i .. ": " .. w .. "x" .. h)
+    alturaTotal = math.max(alturaTotal, h)
 end
 
 print("Tela gigante: " .. larguraTotal .. "x" .. alturaTotal)
 
--- Cores para balada
+-- Paleta de cores vibrantes
 local cores = {
     colors.red, colors.orange, colors.yellow,
     colors.lime, colors.green, colors.cyan,
     colors.lightBlue, colors.blue, colors.purple,
-    colors.pink, colors.magenta, colors.white
+    colors.pink, colors.magenta, colors.white,
+    colors.brown, colors.lightGray
 }
 
--- Função para desenhar na tela gigante
+-- Função de desenho otimizada
 function desenhar(x, y, cor)
     local xAtual = 0
     for i, mon in ipairs(monitores) do
         local w = larguras[i]
         if x >= xAtual and x < xAtual + w and y >= 1 and y <= alturaTotal then
-            local xLocal = x - xAtual + 1
             mon.setBackgroundColor(cor)
-            mon.setCursorPos(xLocal, y)
+            mon.setCursorPos(x - xAtual + 1, y)
             mon.write(" ")
             return
         end
@@ -63,12 +52,19 @@ function desenhar(x, y, cor)
     end
 end
 
--- 1. LASERS CORRETO (consertado)
+-- 1. LASERS ESPETACULAR (totalmente refeito)
 function lasers()
-    print("Lasers Ativado")
+    print("Lasers Espetacular Ativado")
     
-    local angulos = {}
-    for i = 1, 6 do angulos[i] = math.random(0, 360) end
+    local lasers = {}
+    for i = 1, 8 do
+        lasers[i] = {
+            angulo = math.random(0, 360),
+            velocidade = math.random(8, 15),
+            cor = cores[i % #cores + 1],
+            tamanho = math.random(30, 50)
+        }
+    end
     
     while true do
         -- Limpar
@@ -77,32 +73,38 @@ function lasers()
             mon.clear()
         end
         
-        -- Atualizar lasers
-        for i, angulo in ipairs(angulos) do
-            angulos[i] = (angulo + math.random(10, 20)) % 360
-            local cor = cores[(i - 1) % #cores + 1]
+        -- Desenhar lasers
+        for i, laser in ipairs(lasers) do
+            laser.angulo = (laser.angulo + laser.velocidade) % 360
+            
             local centroX = math.floor(larguraTotal / 2)
             local centroY = math.floor(alturaTotal / 2)
-            local raio = math.max(larguraTotal, alturaTotal) * 0.8
             
-            -- Desenhar laser
-            for t = 0, raio, 0.8 do
-                local x = centroX + math.cos(math.rad(angulo)) * t
-                local y = centroY + math.sin(math.rad(angulo)) * t
+            for t = 0, laser.tamanho, 0.7 do
+                local x = centroX + math.cos(math.rad(laser.angulo)) * t
+                local y = centroY + math.sin(math.rad(laser.angulo)) * t
+                
                 x = math.floor(x)
                 y = math.floor(y)
+                
                 if x >= 1 and x <= larguraTotal and y >= 1 and y <= alturaTotal then
-                    desenhar(x, y, cor)
+                    desenhar(x, y, laser.cor)
+                    -- Efeito de brilho
+                    if math.random(1, 3) == 1 then
+                        desenhar(x + 1, y, laser.cor)
+                        desenhar(x - 1, y, laser.cor)
+                    end
                 end
             end
         end
-        os.sleep(0.1)
+        
+        os.sleep(0.08)
     end
 end
 
--- 2. FOGOS ARTIFICIO (já estava bom)
+-- 2. FOGOS ESPETACULARES (muito melhorado)
 function fogos()
-    print("Fogos Ativado")
+    print("Fogos Espetaculares Ativado")
     
     local fogos = {}
     
@@ -114,70 +116,115 @@ function fogos()
         end
         
         -- Novo fogo
-        if math.random(1, 10) == 1 and #fogos < 5 then
+        if math.random(1, 6) == 1 and #fogos < 8 then
             table.insert(fogos, {
-                x = math.random(5, larguraTotal - 5),
-                y = alturaTotal,
-                vel = math.random(3, 6),
-                explosaoY = math.random(10, math.floor(alturaTotal * 0.4)),
+                x = math.random(10, larguraTotal - 10),
+                y = alturaTotal + 5,
+                vel = math.random(4, 8),
+                explosaoY = math.random(15, math.floor(alturaTotal * 0.3)),
                 explodiu = false,
-                partes = {},
+                particulas = {},
                 cor = cores[math.random(1, #cores)]
             })
         end
         
         -- Atualizar fogos
         for i = #fogos, 1, -1 do
-            local f = fogos[i]
+            local fogo = fogos[i]
             
-            if not f.explodiu then
-                f.y = f.y - f.vel
-                desenhar(f.x, f.y, colors.white)
+            if not fogo.explodiu then
+                -- Foguete subindo
+                fogo.y = fogo.y - fogo.vel
                 
-                if f.y <= f.explosaoY then
-                    f.explodiu = true
-                    for p = 1, 20 do
-                        local ang = math.random(0, 360)
-                        local vel = math.random(1, 3) / 1.5
-                        f.partes[p] = {
-                            x = f.x, y = f.y,
-                            dx = math.cos(math.rad(ang)) * vel,
-                            dy = math.sin(math.rad(ang)) * vel,
-                            vida = math.random(30, 50),
-                            cor = cores[math.random(1, #cores)]
+                -- Rastro do foguete
+                for r = 0, 3 do
+                    local yRastro = fogo.y + r
+                    if yRastro <= alturaTotal and yRastro >= 1 then
+                        desenhar(fogo.x, yRastro, colors.white)
+                        desenhar(fogo.x + 1, yRastro, colors.orange)
+                        desenhar(fogo.x - 1, yRastro, colors.orange)
+                    end
+                end
+                
+                -- Explodir
+                if fogo.y <= fogo.explosaoY then
+                    fogo.explodiu = true
+                    -- Criar explosão espetacular
+                    for p = 1, 35 do
+                        local angulo = math.random(0, 360)
+                        local velocidade = math.random(2, 6) / 2
+                        local vida = math.random(40, 80)
+                        
+                        fogo.particulas[p] = {
+                            x = fogo.x,
+                            y = fogo.y,
+                            dx = math.cos(math.rad(angulo)) * velocidade,
+                            dy = math.sin(math.rad(angulo)) * velocidade,
+                            vida = vida,
+                            cor = cores[math.random(1, #cores)],
+                            tamanho = math.random(1, 3)
                         }
                     end
                 end
             else
+                -- Explosão
                 local todasMortas = true
-                for p, parte in ipairs(f.partes) do
-                    if parte.vida > 0 then
+                
+                for p, particula in ipairs(fogo.particulas) do
+                    if particula.vida > 0 then
                         todasMortas = false
-                        parte.x = parte.x + parte.dx
-                        parte.y = parte.y + parte.dy
-                        parte.vida = parte.vida - 1
-                        if parte.x >= 1 and parte.x <= larguraTotal and parte.y >= 1 and parte.y <= alturaTotal then
-                            desenhar(math.floor(parte.x), math.floor(parte.y), parte.cor)
+                        
+                        -- Mover partícula
+                        particula.x = particula.x + particula.dx
+                        particula.y = particula.y + particula.dy
+                        particula.vida = particula.vida - 1
+                        
+                        -- Desenhar partícula
+                        if particula.x >= 1 and particula.x <= larguraTotal and 
+                           particula.y >= 1 and particula.y <= alturaTotal then
+                           
+                            desenhar(math.floor(particula.x), math.floor(particula.y), particula.cor)
+                            
+                            -- Partículas maiores
+                            if particula.tamanho > 1 then
+                                desenhar(math.floor(particula.x) + 1, math.floor(particula.y), particula.cor)
+                                desenhar(math.floor(particula.x) - 1, math.floor(particula.y), particula.cor)
+                            end
+                            if particula.tamanho > 2 then
+                                desenhar(math.floor(particula.x), math.floor(particula.y) + 1, particula.cor)
+                                desenhar(math.floor(particula.x), math.floor(particula.y) - 1, particula.cor)
+                            end
                         end
                     end
                 end
+                
                 if todasMortas then
                     table.remove(fogos, i)
                 end
             end
         end
+        
+        -- Estrelas de fundo
+        for s = 1, math.floor(larguraTotal * 0.1) do
+            local x = math.random(1, larguraTotal)
+            local y = math.random(1, alturaTotal)
+            if math.random(1, 3) == 1 then
+                desenhar(x, y, colors.white)
+            end
+        end
+        
         os.sleep(0.1)
     end
 end
 
--- 3. TUNEL FUNCIONANDO (consertado)
+-- 3. TUNEL PERFEITO (totalmente refeito)
 function tunel()
-    print("Tunel Ativado")
+    print("Tunel Perfeito Ativado")
     
     local tempo = 0
     
     while true do
-        tempo = tempo + 0.3
+        tempo = tempo + 0.2
         
         -- Limpar
         for i, mon in ipairs(monitores) do
@@ -187,25 +234,30 @@ function tunel()
         
         local centroX = math.floor(larguraTotal / 2)
         local centroY = math.floor(alturaTotal / 2)
+        local maxRaio = math.max(larguraTotal, alturaTotal) * 0.6
         
-        -- Desenhar anéis do túnel
-        for anel = 1, 10 do
-            local raio = anel * 3 + math.sin(tempo + anel) * 2
-            local cor = cores[anel % #cores + 1]
+        -- Desenhar túnel
+        for anel = 1, 15 do
+            local progresso = anel / 15
+            local raio = progresso * maxRaio + math.sin(tempo + anel * 0.3) * 3
+            local cor = cores[(anel + math.floor(tempo)) % #cores + 1]
             
-            for angulo = 0, 360, 8 do
+            -- Anel mais denso
+            for angulo = 0, 360, 4 do
                 local x = centroX + math.cos(math.rad(angulo)) * raio
                 local y = centroY + math.sin(math.rad(angulo)) * raio
+                
                 x = math.floor(x)
                 y = math.floor(y)
+                
                 if x >= 1 and x <= larguraTotal and y >= 1 and y <= alturaTotal then
                     desenhar(x, y, cor)
                 end
             end
         end
         
-        -- Centro do túnel
-        local centroRaio = 4 + math.sin(tempo * 2) * 2
+        -- Centro pulsante
+        local centroRaio = 3 + math.sin(tempo * 3) * 2
         for y = -centroRaio, centroRaio do
             for x = -centroRaio, centroRaio do
                 if x*x + y*y <= centroRaio*centroRaio then
@@ -222,14 +274,14 @@ function tunel()
     end
 end
 
--- 4. PULSACOES COLORIDAS (novo - substitui o 4 antigo)
+-- 4. PULSACOES ENERGETICAS (novo e funcionando)
 function pulsacoes()
-    print("Pulsacoes Coloridas Ativado")
+    print("Pulsacoes Energeticas Ativado")
     
-    local pulsos = 0
+    local tempo = 0
     
     while true do
-        pulsos = pulsos + 1
+        tempo = tempo + 0.3
         
         -- Limpar
         for i, mon in ipairs(monitores) do
@@ -237,163 +289,171 @@ function pulsacoes()
             mon.clear()
         end
         
-        -- Criar pulsos concêntricos
-        for camada = 1, 8 do
-            local raio = (math.sin(pulsos * 0.2 + camada * 0.5) + 1) * math.min(larguraTotal, alturaTotal) * 0.2
-            local cor = cores[(camada + pulsos) % #cores + 1]
+        -- Múltiplas pulsações
+        for onda = 1, 5 do
+            local cor = cores[(onda + math.floor(tempo)) % #cores + 1]
+            local frequencia = 0.5 + onda * 0.1
+            local amplitude = math.min(larguraTotal, alturaTotal) * 0.2
             
             local centroX = math.floor(larguraTotal / 2)
             local centroY = math.floor(alturaTotal / 2)
             
-            for y = -math.floor(raio), math.floor(raio) do
-                for x = -math.floor(raio), math.floor(raio) do
-                    if x*x + y*y <= raio*raio then
-                        local px = centroX + x
-                        local py = centroY + y
-                        if px >= 1 and px <= larguraTotal and py >= 1 and py <= alturaTotal then
-                            desenhar(px, py, cor)
-                        end
+            local raio = (math.sin(tempo * frequencia) + 1) * amplitude
+            
+            -- Desenhar círculo pulsante
+            for angulo = 0, 360, 3 do
+                local x = centroX + math.cos(math.rad(angulo)) * raio
+                local y = centroY + math.sin(math.rad(angulo)) * raio
+                
+                x = math.floor(x)
+                y = math.floor(y)
+                
+                if x >= 1 and x <= larguraTotal and y >= 1 and y <= alturaTotal then
+                    desenhar(x, y, cor)
+                end
+            end
+        end
+        
+        os.sleep(0.12)
+    end
+end
+
+-- 5. CHUVA DE ENERGIAS (melhorado)
+function chuva()
+    print("Chuva de Energias Ativado")
+    
+    local particulas = {}
+    
+    while true do
+        -- Limpar
+        for i, mon in ipairs(monitores) do
+            mon.setBackgroundColor(colors.black)
+            mon.clear()
+        end
+        
+        -- Nova partícula
+        if math.random(1, 2) == 1 then
+            table.insert(particulas, {
+                x = math.random(1, larguraTotal),
+                y = 1,
+                velocidade = math.random(3, 8),
+                cor = cores[math.random(1, #cores)],
+                tamanho = math.random(1, 4),
+                oscilacao = math.random() * 2
+            })
+        end
+        
+        -- Atualizar partículas
+        for i = #particulas, 1, -1 do
+            local p = particulas[i]
+            
+            -- Mover com oscilação lateral
+            p.x = p.x + math.sin(os.clock() + p.oscilacao) * 0.5
+            p.y = p.y + p.velocidade
+            
+            -- Desenhar partícula com tamanho variado
+            for dy = 0, p.tamanho - 1 do
+                for dx = -math.floor(p.tamanho/2), math.floor(p.tamanho/2) do
+                    local px = math.floor(p.x + dx)
+                    local py = math.floor(p.y + dy)
+                    
+                    if px >= 1 and px <= larguraTotal and py >= 1 and py <= alturaTotal then
+                        desenhar(px, py, p.cor)
+                    end
+                end
+            end
+            
+            -- Rastro
+            for r = 1, 3 do
+                local yRastro = p.y - r * p.tamanho
+                if yRastro >= 1 then
+                    desenhar(math.floor(p.x), math.floor(yRastro), p.cor)
+                end
+            end
+            
+            -- Remover se saiu
+            if p.y > alturaTotal + 10 then
+                table.remove(particulas, i)
+            end
+        end
+        
+        os.sleep(0.1)
+    end
+end
+
+-- 6. ONDAS ULTRA COLORIDAS (mais cores)
+function ondas()
+    print("Ondas Ultra Coloridas Ativado")
+    
+    local tempo = 0
+    
+    while true do
+        tempo = tempo + 0.15
+        
+        -- Limpar
+        for i, mon in ipairs(monitores) do
+            mon.setBackgroundColor(colors.black)
+            mon.clear()
+        end
+        
+        -- Muitas ondas coloridas
+        for onda = 1, 8 do
+            local cor = cores[(onda + math.floor(tempo * 2)) % #cores + 1]
+            local frequencia = 0.08 + onda * 0.02
+            local amplitude = alturaTotal * 0.1
+            local offset = onda * 1.2
+            
+            for x = 1, larguraTotal do
+                local y = math.sin(x * frequencia + tempo + offset) * amplitude + alturaTotal / 2
+                y = math.floor(y)
+                
+                if y >= 1 and y <= alturaTotal then
+                    desenhar(x, y, cor)
+                    -- Tornar a onda mais visível
+                    if y > 1 then desenhar(x, y - 1, cor) end
+                    if y < alturaTotal then desenhar(x, y + 1, cor) end
+                    if math.random(1, 2) == 1 then
+                        desenhar(x + 1, y, cor)
+                        desenhar(x - 1, y, cor)
                     end
                 end
             end
         end
         
-        os.sleep(0.15)
+        os.sleep(0.08)
     end
 end
 
--- 5. CHUVA DE LUZES (novo - substitui o 5 antigo)
-function chuvaLuzes()
-    print("Chuva de Luzes Ativado")
-    
-    local gotas = {}
-    
-    while true do
-        -- Limpar
-        for i, mon in ipairs(monitores) do
-            mon.setBackgroundColor(colors.black)
-            mon.clear()
-        end
-        
-        -- Nova gota
-        if math.random(1, 3) == 1 then
-            table.insert(gotas, {
-                x = math.random(1, larguraTotal),
-                y = 1,
-                velocidade = math.random(2, 5),
-                cor = cores[math.random(1, #cores)]
-            })
-        end
-        
-        -- Atualizar gotas
-        for i = #gotas, 1, -1 do
-            local g = gotas[i]
-            
-            -- Desenhar gota com rastro
-            for r = 0, 3 do
-                local yRastro = g.y - r
-                if yRastro >= 1 and yRastro <= alturaTotal then
-                    desenhar(g.x, yRastro, g.cor)
-                end
-            end
-            
-            -- Mover gota
-            g.y = g.y + g.velocidade
-            
-            -- Remover se saiu da tela
-            if g.y > alturaTotal + 5 then
-                table.remove(gotas, i)
-            end
-        end
-        
-        -- Fundo com pontos de luz
-        for p = 1, math.floor(larguraTotal * alturaTotal * 0.01) do
-            local x = math.random(1, larguraTotal)
-            local y = math.random(1, alturaTotal)
-            if math.random(1, 4) == 1 then
-                desenhar(x, y, colors.white)
-            end
-        end
-        
-        os.sleep(0.1)
-    end
-end
-
--- 6. ONDAS COLORIDAS (já estava bom)
-function ondas()
-    print("Ondas Coloridas Ativado")
-    
-    local tempo = 0
-    
-    while true do
-        tempo = tempo + 0.2
-        
-        -- Limpar
-        for i, mon in ipairs(monitores) do
-            mon.setBackgroundColor(colors.black)
-            mon.clear()
-        end
-        
-        -- Múltiplas ondas coloridas
-        for onda = 1, 5 do
-            local cor = cores[onda % #cores + 1]
-            local freq = 0.1 + onda * 0.03
-            local amp = alturaTotal * 0.15
-            local offset = onda * 0.8
-            
-            for x = 1, larguraTotal do
-                local y = math.sin(x * freq + tempo + offset) * amp + alturaTotal / 2
-                y = math.floor(y)
-                
-                if y >= 1 and y <= alturaTotal then
-                    desenhar(x, y, cor)
-                    -- Tornar a onda mais grossa
-                    if y > 1 then desenhar(x, y - 1, cor) end
-                    if y < alturaTotal then desenhar(x, y + 1, cor) end
-                end
-            end
-        end
-        
-        os.sleep(0.1)
-    end
-end
-
--- Menu
+-- Menu simples
 function menu()
-    print("\n" .. string.rep("=", 40))
+    print("\n=================================")
     print("SHOW BALADA - " .. #monitores .. " TELAS")
-    print(string.rep("=", 40))
-    print("1. Lasers (Consertado)")
-    print("2. Fogos Artificial")
-    print("3. Tunel (Consertado)")
-    print("4. Pulsacoes Coloridas (Novo)")
-    print("5. Chuva de Luzes (Novo)")
-    print("6. Ondas Coloridas")
-    print(string.rep("=", 40))
+    print("=================================")
+    print("1. Lasers Espetacular")
+    print("2. Fogos Espetaculares")
+    print("3. Tunel Perfeito")
+    print("4. Pulsacoes Energeticas")
+    print("5. Chuva de Energias")
+    print("6. Ondas Ultra Coloridas")
+    print("=================================")
     
     write("Escolha (1-6): ")
-    local escolha = read()
+    local e = read()
     
-    if escolha == "1" then lasers()
-    elseif escolha == "2" then fogos()
-    elseif escolha == "3" then tunel()
-    elseif escolha == "4" then pulsacoes()
-    elseif escolha == "5" then chuvaLuzes()
-    elseif escolha == "6" then ondas()
-    else
-        print("Opcao invalida!")
-        os.sleep(1)
-    end
+    if e == "1" then lasers()
+    elseif e == "2" then fogos()
+    elseif e == "3" then tunel()
+    elseif e == "4" then pulsacoes()
+    elseif e == "5" then chuva()
+    elseif e == "6" then ondas()
+    else print("Invalido!"); os.sleep(1) end
 end
 
--- Programa principal
+-- Iniciar
 function main()
-    print("Sistema pronto! Pressione Ctrl+T para parar qualquer efeito")
-    
     while true do
         menu()
     end
 end
 
--- Iniciar
 main()
