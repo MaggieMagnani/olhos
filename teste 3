@@ -1,103 +1,114 @@
--- =============================================
--- SISTEMA EXPANDIDO - MAIS VELOCIDADE E EFEITOS
--- =============================================
-
-print("=== SISTEMA EXPANDIDO ===")
-
--- [CONFIGURACOES INICIAIS MANTIDAS...]
-local telas = {peripheral.find("monitor")}
-if not telas[1] then telas = {telas} end
-print("Telas detectadas: " .. #telas)
-
-for i, tela in ipairs(telas) do
-    tela.setTextScale(0.5)
-end
-
--- MODOS DE COR (mantido)
-local modosCor = {
-    ["Branco"] = { cores = {colors.white} },
-    ["ColoridoAleatorio"] = {
-        cores = { colors.red, colors.orange, colors.yellow, colors.lime, 
-                 colors.green, colors.cyan, colors.lightBlue, colors.blue, 
-                 colors.purple, colors.pink, colors.magenta }
-    },
-    ["CorSolida"] = {
-        cores = { colors.red, colors.orange, colors.yellow, colors.lime,
-                 colors.green, colors.blue, colors.purple, colors.pink }
-    }
-}
-
--- VELOCIDADES EXPANDIDAS (+1 velocidade)
-local velocidades = {
-    ["Lenta"] = { multiplicador = 2.5 },
-    ["Media"] = { multiplicador = 1.5 },
-    ["Rapida"] = { multiplicador = 1.0 },
-    ["Eletronica"] = { multiplicador = 0.4 },
-    ["Ultra"] = { multiplicador = 0.15 }  -- NOVA VELOCIDADE
-}
-
--- Variaveis globais
-local modoCorAtual = "Branco"
-local velocidadeAtual = "Media"
-local corSolidaAtual = colors.red
-
--- Funcoes auxiliares (mantidas)
-function obterCor(telaIndex)
-    if modoCorAtual == "Branco" then return colors.white
-    elseif modoCorAtual == "ColoridoAleatorio" then 
-        return modosCor.ColoridoAleatorio.cores[math.random(1, #modosCor.ColoridoAleatorio.cores)]
-    elseif modoCorAtual == "CorSolida" then return corSolidaAtual end
-    return colors.white
-end
-
-function aplicarVelocidade(tempoBase)
-    return tempoBase * velocidades[velocidadeAtual].multiplicador
-end
-
--- EFEITO 9: FITAS LED COLORIDAS (NOVO)
+-- EFEITO 9: FITAS LED POR TELA (CORRIGIDO)
 function fitasLed()
-    print("Fitas LED Coloridas - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    print("Fitas LED por Tela - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
     
     local posicao = 0
-    local coresFita = {
-        colors.red, colors.orange, colors.yellow, colors.lime,
-        colors.green, colors.cyan, colors.blue, colors.purple,
-        colors.pink, colors.magenta, colors.white
-    }
     
     while true do
         posicao = posicao + 1
         
         for i, tela in ipairs(telas) do
             local w, h = tela.getSize()
-            tela.setBackgroundColor(colors.black)
+            
+            -- UMA cor por tela (diferente para cada tela)
+            local corTela
+            if modoCorAtual == "Branco" then
+                corTela = colors.white
+            elseif modoCorAtual == "ColoridoAleatorio" then
+                -- Cada tela tem uma cor fixa diferente
+                local cores = {colors.red, colors.blue, colors.green, colors.yellow, colors.purple, colors.cyan}
+                corTela = cores[(i % #cores) + 1]
+            else
+                corTela = obterCor(i)
+            end
+            
+            -- Preenche a tela inteira com a cor
+            tela.setBackgroundColor(corTela)
             tela.clear()
             
-            -- Calcula quantas fitas cabem na tela
-            local numFitas = 4
-            local alturaFita = math.floor(h / numFitas)
-            
-            -- Desenha cada fita
-            for fita = 1, numFitas do
-                local yInicio = (fita - 1) * alturaFita + 1
-                local yFim = fita * alturaFita
-                
-                -- Cor da fita (diferente para cada uma)
-                local corFita
-                if modoCorAtual == "Branco" then
-                    corFita = colors.white
-                else
-                    local indiceCor = ((posicao + fita + i) % #coresFita) + 1
-                    corFita = coresFita[indiceCor]
+            -- Efeito de "scroll" horizontal sutil
+            for x = 1, w do
+                local intensidade = (math.sin((x + posicao) * 0.2) + 1) / 2
+                if intensidade > 0.7 then
+                    for y = 1, h do
+                        tela.setBackgroundColor(colors.black)
+                        tela.setCursorPos(x, y)
+                        tela.write(" ")
+                    end
                 end
-                
-                -- Desenha fita movendo-se horizontalmente
-                for x = 1, w do
-                    local xEfeito = (x + posicao) % w + 1
+            end
+        end
+        
+        os.sleep(aplicarVelocidade(0.15))
+    end
+end
+
+-- EFEITO 10: PSICODELICO SUAVE (CORRIGIDO - SEM PISCAR)
+function psicodelico()
+    print("Psicodelico Suave - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    
+    local tempo = 0
+    
+    while true do
+        tempo = tempo + 1
+        
+        for i, tela in ipairs(telas) do
+            local w, h = tela.getSize()
+            
+            -- Fundo psicodelico (sem limpar a tela completamente)
+            for x = 1, w do
+                for y = 1, h do
+                    -- Padrao dinamico suave
+                    local r = math.sin(x * 0.1 + tempo * 0.05) * 0.5 + 0.5
+                    local g = math.cos(y * 0.1 + tempo * 0.03) * 0.5 + 0.5
+                    local b = math.sin((x + y) * 0.05 + tempo * 0.07) * 0.5 + 0.5
                     
-                    for y = yInicio, yFim do
-                        tela.setBackgroundColor(corFita)
-                        tela.setCursorPos(xEfeito, y)
+                    local intensidade = (r + g + b) / 3
+                    
+                    if intensidade > 0.6 then
+                        local cor
+                        if modoCorAtual == "Branco" then
+                            cor = colors.white
+                        else
+                            -- Ciclo de cores baseado na posicao e tempo
+                            local corIndex = math.floor((x + y + tempo) * 0.1) % #modosCor.ColoridoAleatorio.cores + 1
+                            cor = modosCor.ColoridoAleatorio.cores[corIndex]
+                        end
+                        
+                        tela.setBackgroundColor(cor)
+                        tela.setCursorPos(x, y)
+                        tela.write(" ")
+                    else
+                        -- Areas escuras para contraste
+                        tela.setBackgroundColor(colors.black)
+                        tela.setCursorPos(x, y)
+                        tela.write(" ")
+                    end
+                end
+            end
+            
+            -- Formas geometricas flutuantes (adicionadas sobre o fundo)
+            for f = 1, 3 do
+                local tamanho = 3 + math.sin(tempo * 0.1 + f) * 2
+                local centroX = (math.sin(tempo * 0.02 + f) * 0.5 + 0.5) * w
+                local centroY = (math.cos(tempo * 0.015 + f) * 0.5 + 0.5) * h
+                
+                centroX = math.floor(centroX)
+                centroY = math.floor(centroY)
+                
+                local corForma = obterCor(i)
+                
+                -- Desenha circulo
+                for angulo = 0, 360, 20 do
+                    local x = centroX + math.cos(math.rad(angulo)) * tamanho
+                    local y = centroY + math.sin(math.rad(angulo)) * tamanho
+                    
+                    x = math.floor(x)
+                    y = math.floor(y)
+                    
+                    if x >= 1 and x <= w and y >= 1 and y <= h then
+                        tela.setBackgroundColor(corForma)
+                        tela.setCursorPos(x, y)
                         tela.write(" ")
                     end
                 end
@@ -107,292 +118,3 @@ function fitasLed()
         os.sleep(aplicarVelocidade(0.1))
     end
 end
-
--- EFEITO 10: PSICODELICO ABSTRATO (NOVO)
-function psicodelico()
-    print("Psicodelico Abstrato - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
-    
-    local tempo = 0
-    local formas = {}
-    
-    -- Cria formas geometricas iniciais
-    for i, tela in ipairs(telas) do
-        local w, h = tela.getSize()
-        formas[i] = {}
-        
-        for f = 1, 3 do
-            formas[i][f] = {
-                tipo = math.random(1, 3),  -- 1=circulo, 2=quadrado, 3=triangulo
-                x = math.random(5, w - 5),
-                y = math.random(5, h - 5),
-                tamanho = math.random(3, 8),
-                velocidadeX = (math.random() - 0.5) * 2,
-                velocidadeY = (math.random() - 0.5) * 2,
-                rotacao = math.random(0, 360),
-                cor = obterCor(i),
-                pulsacao = math.random(1, 3)
-            }
-        end
-    end
-    
-    while true do
-        tempo = tempo + 1
-        
-        for i, tela in ipairs(telas) do
-            local w, h = tela.getSize()
-            tela.setBackgroundColor(colors.black)
-            tela.clear()
-            
-            -- Fundo com padrao dinamico
-            for x = 1, w do
-                for y = 1, h do
-                    local padrao = math.sin(x * 0.2 + tempo * 0.1) + math.cos(y * 0.2 + tempo * 0.08)
-                    if padrao > 0.5 then
-                        local corFundo = colors.gray
-                        tela.setBackgroundColor(corFundo)
-                        tela.setCursorPos(x, y)
-                        tela.write(" ")
-                    end
-                end
-            end
-            
-            -- Atualiza e desenha formas
-            for f, forma in ipairs(formas[i]) do
-                -- Move forma
-                forma.x = forma.x + forma.velocidadeX
-                forma.y = forma.y + forma.velocidadeY
-                forma.rotacao = (forma.rotacao + 1) % 360
-                
-                -- Rebate nas bordas
-                if forma.x <= forma.tamanho or forma.x >= w - forma.tamanho then
-                    forma.velocidadeX = -forma.velocidadeX
-                    forma.cor = obterCor(i)
-                end
-                if forma.y <= forma.tamanho or forma.y >= h - forma.tamanho then
-                    forma.velocidadeY = -forma.velocidadeY
-                    forma.cor = obterCor(i)
-                end
-                
-                -- Efeito de pulsacao
-                local tamanhoAtual = forma.tamanho + math.sin(tempo * 0.2 + f) * forma.pulsacao
-                
-                -- Desenha forma baseada no tipo
-                local cor = forma.cor
-                local centroX, centroY = math.floor(forma.x), math.floor(forma.y)
-                
-                if forma.tipo == 1 then
-                    -- Circulo
-                    for angulo = 0, 360, 10 do
-                        local x = centroX + math.cos(math.rad(angulo + forma.rotacao)) * tamanhoAtual
-                        local y = centroY + math.sin(math.rad(angulo + forma.rotacao)) * tamanhoAtual
-                        x, y = math.floor(x), math.floor(y)
-                        if x >= 1 and x <= w and y >= 1 and y <= h then
-                            tela.setBackgroundColor(cor)
-                            tela.setCursorPos(x, y)
-                            tela.write(" ")
-                        end
-                    end
-                    
-                elseif forma.tipo == 2 then
-                    -- Quadrado giratorio
-                    for dx = -tamanhoAtual, tamanhoAtual do
-                        for dy = -tamanhoAtual, tamanhoAtual do
-                            if math.abs(dx) == math.floor(tamanhoAtual) or math.abs(dy) == math.floor(tamanhoAtual) then
-                                local x = centroX + dx
-                                local y = centroY + dy
-                                if x >= 1 and x <= w and y >= 1 and y <= h then
-                                    tela.setBackgroundColor(cor)
-                                    tela.setCursorPos(x, y)
-                                    tela.write(" ")
-                                end
-                            end
-                        end
-                    end
-                    
-                else
-                    -- Triangulo
-                    for ponto = 1, 3 do
-                        local angulo = forma.rotacao + (ponto * 120)
-                        local x1 = centroX + math.cos(math.rad(angulo)) * tamanhoAtual
-                        local y1 = centroY + math.sin(math.rad(angulo)) * tamanhoAtual
-                        local x2 = centroX + math.cos(math.rad(angulo + 120)) * tamanhoAtual
-                        local y2 = centroY + math.sin(math.rad(angulo + 120)) * tamanhoAtual
-                        
-                        -- Linha entre pontos (simplificado)
-                        for t = 0, 1, 0.1 do
-                            local x = math.floor(x1 + (x2 - x1) * t)
-                            local y = math.floor(y1 + (y2 - y1) * t)
-                            if x >= 1 and x <= w and y >= 1 and y <= h then
-                                tela.setBackgroundColor(cor)
-                                tela.setCursorPos(x, y)
-                                tela.write(" ")
-                            end
-                        end
-                    end
-                end
-            end
-            
-            -- Novas formas ocasionalmente
-            if tempo % 50 == 0 and #formas[i] < 5 then
-                table.insert(formas[i], {
-                    tipo = math.random(1, 3),
-                    x = math.random(5, w - 5),
-                    y = math.random(5, h - 5),
-                    tamanho = math.random(3, 8),
-                    velocidadeX = (math.random() - 0.5) * 2,
-                    velocidadeY = (math.random() - 0.5) * 2,
-                    rotacao = math.random(0, 360),
-                    cor = obterCor(i),
-                    pulsacao = math.random(1, 3)
-                })
-            end
-        end
-        
-        os.sleep(aplicarVelocidade(0.08))
-    end
-end
-
--- [MANTENHA AQUI TODOS OS SEUS EFEITOS ORIGINAIS...]
--- EFEITO 1: pulsoSequencial
--- EFEITO 2: onda
--- EFEITO 3: explosoes
--- EFEITO 4: barrasVerticais
--- EFEITO 5: constelacao
--- EFEITO 6: bolinhas
--- EFEITO 7: piscadaAleatoria
--- EFEITO 8: gruposSequenciais
-
--- MENU VELOCIDADE ATUALIZADO
-function menuVelocidade()
-    print("\n" .. string.rep("=", 40))
-    print("SELECIONE A VELOCIDADE")
-    print(string.rep("=", 40))
-    print("1. Lenta")
-    print("2. Media")
-    print("3. Rapida")
-    print("4. Eletronica")
-    print("5. Ultra")  -- NOVA VELOCIDADE
-    print(string.rep("=", 40))
-    
-    write("Escolha (1-5): ")
-    local escolha = read()
-    
-    if escolha == "1" then velocidadeAtual = "Lenta"
-    elseif escolha == "2" then velocidadeAtual = "Media"
-    elseif escolha == "3" then velocidadeAtual = "Rapida"
-    elseif escolha == "4" then velocidadeAtual = "Eletronica"
-    elseif escolha == "5" then velocidadeAtual = "Ultra"
-    else print("Velocidade mantida: " .. velocidadeAtual) end
-    
-    os.sleep(1)
-end
-
--- MENU CORES (mantido)
-function menuCores()
-    print("\n" .. string.rep("=", 35))
-    print("SELECIONE CORES")
-    print(string.rep("=", 35))
-    print("1. Branco e Preto")
-    print("2. Colorido Aleatorio")
-    print("3. Cor Solida")
-    print(string.rep("=", 35))
-    
-    write("Escolha (1-3): ")
-    local escolha = read()
-    
-    if escolha == "1" then
-        modoCorAtual = "Branco"
-        print("Modo: Branco e Preto")
-    elseif escolha == "2" then
-        modoCorAtual = "ColoridoAleatorio"
-        print("Modo: Colorido Aleatorio")
-    elseif escolha == "3" then
-        modoCorAtual = "CorSolida"
-        print("\nESCOLHA A COR:")
-        print("1. Vermelho")
-        print("2. Laranja")
-        print("3. Amarelo")
-        print("4. Verde")
-        print("5. Azul")
-        print("6. Roxo")
-        print("7. Rosa")
-        write("Cor (1-7): ")
-        local corEscolha = tonumber(read())
-        local cores = {colors.red, colors.orange, colors.yellow, colors.green, colors.blue, colors.purple, colors.pink}
-        if corEscolha and corEscolha >=1 and corEscolha <=7 then
-            corSolidaAtual = cores[corEscolha]
-            print("Cor solida selecionada")
-        end
-    else
-        print("Modo mantido: " .. modoCorAtual)
-    end
-    
-    os.sleep(1)
-end
-
--- MENU PRINCIPAL EXPANDIDO
-function menuPrincipal()
-    menuVelocidade()
-    menuCores()
-    
-    print("\n" .. string.rep("=", 50))
-    print("EFEITOS DISPONIVEIS - " .. #telas .. " TELAS")
-    print("Velocidade: " .. velocidadeAtual)
-    print("Modo: " .. modoCorAtual)
-    print(string.rep("=", 50))
-    print("1. Pulso Sequencial")
-    print("2. Onda")
-    print("3. Explosoes de Energia")
-    print("4. Barras Verticais")
-    print("5. Constelacao em Movimento")
-    print("6. Bolinhas Passando")
-    print("7. Piscada Aleatoria")
-    print("8. Grupos Sequenciais")
-    print("9. Fitas LED Coloridas")      -- NOVO EFEITO
-    print("10. Psicodelico Abstrato")    -- NOVO EFEITO
-    print("11. Trocar Configuracoes")
-    print("0. Sair")
-    print(string.rep("=", 50))
-    
-    write("Escolha o efeito (1-11, 0=sair): ")
-    local escolha = read()
-    
-    if escolha == "1" then pulsoSequencial()
-    elseif escolha == "2" then onda()
-    elseif escolha == "3" then explosoes()
-    elseif escolha == "4" then barrasVerticais()
-    elseif escolha == "5" then constelacao()
-    elseif escolha == "6" then bolinhas()
-    elseif escolha == "7" then piscadaAleatoria()
-    elseif escolha == "8" then gruposSequenciais()
-    elseif escolha == "9" then fitasLed()        -- NOVO
-    elseif escolha == "10" then psicodelico()    -- NOVO
-    elseif escolha == "11" then return true
-    elseif escolha == "0" then 
-        for i, tela in ipairs(telas) do
-            tela.setBackgroundColor(colors.black)
-            tela.clear()
-        end
-        return false
-    else
-        print("Opcao invalida!")
-        os.sleep(1)
-    end
-    
-    return true
-end
-
--- PROGRAMA PRINCIPAL
-function main()
-    print("Sistema Expandido Iniciado!")
-    
-    local executando = true
-    while executando do
-        executando = menuPrincipal()
-    end
-    
-    print("Programa encerrado!")
-end
-
--- INICIAR
-main()
