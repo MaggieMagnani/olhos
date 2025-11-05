@@ -1,8 +1,8 @@
 -- =============================================
--- SISTEMA CORRIGIDO E AJUSTADO
+-- SISTEMA COMPLETO DE EFEITOS VISUAIS - BALADA
 -- =============================================
 
-print("=== SISTEMA CORRIGIDO ===")
+print("=== SISTEMA DE EFEITOS VISUAIS ===")
 
 -- Pega TODAS as telas
 local telas = {peripheral.find("monitor")}
@@ -31,16 +31,18 @@ local modosCor = {
 
 -- VELOCIDADES
 local velocidades = {
-    ["Lenta"] = { multiplicador = 2.0 },
-    ["Media"] = { multiplicador = 1.0 },
-    ["Rapida"] = { multiplicador = 0.5 },
-    ["Eletronica"] = { multiplicador = 0.25 }
+    ["Lenta"] = { multiplicador = 2.5 },
+    ["Media"] = { multiplicador = 1.5 },
+    ["Rapida"] = { multiplicador = 1.0 },
+    ["Eletronica"] = { multiplicador = 0.4 },
+    ["Ultra"] = { multiplicador = 0.15 }
 }
 
 -- Variaveis globais
 local modoCorAtual = "Branco"
 local velocidadeAtual = "Media"
 local corSolidaAtual = colors.red
+local executandoEfeito = true
 
 -- Funcao para obter cor
 function obterCor(telaIndex)
@@ -62,10 +64,12 @@ end
 -- EFEITO 1: PULSO SEQUENCIAL
 function pulsoSequencial()
     print("Pulso Sequencial - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    print("Pressione CTRL+T para parar")
     
     local telaAtiva = 1
+    executandoEfeito = true
     
-    while true do
+    while executandoEfeito do
         for i, tela in ipairs(telas) do
             tela.setBackgroundColor(colors.black)
             tela.clear()
@@ -80,15 +84,23 @@ function pulsoSequencial()
         
         os.sleep(aplicarVelocidade(0.3))
     end
+    
+    -- Limpar ao sair
+    for i, tela in ipairs(telas) do
+        tela.setBackgroundColor(colors.black)
+        tela.clear()
+    end
 end
 
 -- EFEITO 2: ONDA
 function onda()
     print("Onda - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    print("Pressione CTRL+T para parar")
     
     local posicao = 0
+    executandoEfeito = true
     
-    while true do
+    while executandoEfeito do
         posicao = posicao + 1
         
         for i, tela in ipairs(telas) do
@@ -106,21 +118,29 @@ function onda()
         
         os.sleep(aplicarVelocidade(0.2))
     end
+    
+    -- Limpar ao sair
+    for i, tela in ipairs(telas) do
+        tela.setBackgroundColor(colors.black)
+        tela.clear()
+    end
 end
 
--- EFEITO 3: EXPLOSOES DE ENERGIA (SUBSTITUIDO)
+-- EFEITO 3: EXPLOSOES DE ENERGIA
 function explosoes()
     print("Explosoes de Energia - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    print("Pressione CTRL+T para parar")
     
     local explosoes = {}
     local tempo = 0
+    executandoEfeito = true
     
     for i, tela in ipairs(telas) do
         local w, h = tela.getSize()
         explosoes[i] = {}
     end
     
-    while true do
+    while executandoEfeito do
         tempo = tempo + 1
         
         for i, tela in ipairs(telas) do
@@ -128,14 +148,12 @@ function explosoes()
             tela.setBackgroundColor(colors.black)
             tela.clear()
             
-            -- Atualiza explosoes existentes
             for e = #explosoes[i], 1, -1 do
                 local explosao = explosoes[i][e]
                 
                 explosao.raio = explosao.raio + explosao.velocidade
                 explosao.vida = explosao.vida - 1
                 
-                -- Desenha circulo de explosao
                 local centroX, centroY = explosao.x, explosao.y
                 local cor = explosao.cor
                 
@@ -152,13 +170,11 @@ function explosoes()
                     end
                 end
                 
-                -- Remove explosao se terminou
                 if explosao.vida <= 0 or explosao.raio > math.max(w, h) then
                     table.remove(explosoes[i], e)
                 end
             end
             
-            -- Nova explosao aleatoria
             if math.random(1, 20) == 1 then
                 local w, h = tela.getSize()
                 table.insert(explosoes[i], {
@@ -174,15 +190,23 @@ function explosoes()
         
         os.sleep(aplicarVelocidade(0.08))
     end
+    
+    -- Limpar ao sair
+    for i, tela in ipairs(telas) do
+        tela.setBackgroundColor(colors.black)
+        tela.clear()
+    end
 end
 
 -- EFEITO 4: BARRAS VERTICAIS
 function barrasVerticais()
     print("Barras Verticais - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    print("Pressione CTRL+T para parar")
     
     local offset = 0
+    executandoEfeito = true
     
-    while true do
+    while executandoEfeito do
         offset = offset + 1
         
         for i, tela in ipairs(telas) do
@@ -204,14 +228,22 @@ function barrasVerticais()
         
         os.sleep(aplicarVelocidade(0.15))
     end
+    
+    -- Limpar ao sair
+    for i, tela in ipairs(telas) do
+        tela.setBackgroundColor(colors.black)
+        tela.clear()
+    end
 end
 
 -- EFEITO 5: CONSTELACAO EM MOVIMENTO
 function constelacao()
     print("Constelacao em Movimento - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    print("Pressione CTRL+T para parar")
     
     local estrelas = {}
     local tempo = 0
+    executandoEfeito = true
     
     for i, tela in ipairs(telas) do
         local w, h = tela.getSize()
@@ -229,7 +261,7 @@ function constelacao()
         end
     end
     
-    while true do
+    while executandoEfeito do
         tempo = tempo + 1
         
         for i, tela in ipairs(telas) do
@@ -287,20 +319,27 @@ function constelacao()
         
         os.sleep(aplicarVelocidade(0.1))
     end
+    
+    -- Limpar ao sair
+    for i, tela in ipairs(telas) do
+        tela.setBackgroundColor(colors.black)
+        tela.clear()
+    end
 end
 
--- EFEITO 6: BOLINHAS PASSANDO (REFORMULADO)
+-- EFEITO 6: BOLINHAS PASSANDO
 function bolinhas()
     print("Bolinhas Passando - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    print("Pressione CTRL+T para parar")
     
     local bolinhas = {}
     local tempo = 0
+    executandoEfeito = true
     
     for i, tela in ipairs(telas) do
         local w, h = tela.getSize()
         bolinhas[i] = {}
         
-        -- Cria bolinhas iniciais
         for b = 1, 4 do
             bolinhas[i][b] = {
                 x = math.random(-5, w + 5),
@@ -314,7 +353,7 @@ function bolinhas()
         end
     end
     
-    while true do
+    while executandoEfeito do
         tempo = tempo + 1
         
         for i, tela in ipairs(telas) do
@@ -322,16 +361,13 @@ function bolinhas()
             tela.setBackgroundColor(colors.black)
             tela.clear()
             
-            -- Atualiza e desenha bolinhas
             for b = #bolinhas[i], 1, -1 do
                 local bolinha = bolinhas[i][b]
                 
-                -- Move bolinha (sempre para a esquerda)
                 bolinha.x = bolinha.x - bolinha.velocidadeX * 0.3
                 bolinha.y = bolinha.y + bolinha.velocidadeY
                 bolinha.vida = bolinha.vida - 1
                 
-                -- Desenha bolinha (sem cauda)
                 local x = math.floor(bolinha.x)
                 local y = math.floor(bolinha.y)
                 
@@ -340,7 +376,6 @@ function bolinhas()
                     tela.setCursorPos(x, y)
                     tela.write(" ")
                     
-                    -- Bolinhas maiores
                     if bolinha.tamanho >= 2 then
                         if x > 1 then tela.setCursorPos(x - 1, y); tela.write(" ") end
                         if x < w then tela.setCursorPos(x + 1, y); tela.write(" ") end
@@ -349,16 +384,14 @@ function bolinhas()
                     end
                 end
                 
-                -- Remove bolinha se saiu da tela ou sem vida
                 if bolinha.x < -5 or bolinha.x > w + 5 or bolinha.y < -5 or bolinha.y > h + 5 or bolinha.vida <= 0 then
                     table.remove(bolinhas[i], b)
                 end
             end
             
-            -- Novas bolinhas
             if math.random(1, 10) == 1 and #bolinhas[i] < 6 then
                 table.insert(bolinhas[i], {
-                    x = w + 5,  -- Comeca a direita
+                    x = w + 5,
                     y = math.random(1, h),
                     velocidadeX = math.random(2, 5),
                     velocidadeY = (math.random() - 0.5) * 0.3,
@@ -371,13 +404,22 @@ function bolinhas()
         
         os.sleep(aplicarVelocidade(0.1))
     end
+    
+    -- Limpar ao sair
+    for i, tela in ipairs(telas) do
+        tela.setBackgroundColor(colors.black)
+        tela.clear()
+    end
 end
 
 -- EFEITO 7: PISCADA ALEATORIA
 function piscadaAleatoria()
     print("Piscada Aleatoria - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    print("Pressione CTRL+T para parar")
     
-    while true do
+    executandoEfeito = true
+    
+    while executandoEfeito do
         for i, tela in ipairs(telas) do
             tela.setBackgroundColor(colors.black)
             tela.clear()
@@ -402,16 +444,24 @@ function piscadaAleatoria()
         
         os.sleep(aplicarVelocidade(0.3))
     end
+    
+    -- Limpar ao sair
+    for i, tela in ipairs(telas) do
+        tela.setBackgroundColor(colors.black)
+        tela.clear()
+    end
 end
 
 -- EFEITO 8: GRUPOS SEQUENCIAIS
 function gruposSequenciais()
     print("Grupos Sequenciais - Modo: " .. modoCorAtual .. " | Velocidade: " .. velocidadeAtual)
+    print("Pressione CTRL+T para parar")
     
     local grupoAtual = 1
     local telasPorGrupo = math.max(1, math.floor(#telas / 3))
+    executandoEfeito = true
     
-    while true do
+    while executandoEfeito do
         for i, tela in ipairs(telas) do
             tela.setBackgroundColor(colors.black)
             tela.clear()
@@ -435,9 +485,206 @@ function gruposSequenciais()
         
         os.sleep(aplicarVelocidade(0.5))
     end
+    
+    -- Limpar ao sair
+    for i, tela in ipairs(telas) do
+        tela.setBackgroundColor(colors.black)
+        tela.clear()
+    end
 end
 
--- MENUS SIMPLIFICADOS (SEM EMOJES)
+-- EFEITO 9 NOVO: ONDA DE CORES ENTRE TELAS
+function ondaDeCores()
+    print("Onda de Cores - Cores fluindo suavemente entre telas!")
+    print("Pressione CTRL+T para parar")
+    
+    local posicaoOnda = 0
+    executandoEfeito = true
+    
+    while executandoEfeito do
+        posicaoOnda = posicaoOnda + 1
+        
+        for i, tela in ipairs(telas) do
+            local w, h = tela.getSize()
+            
+            -- CORES VIBRANTES (arco-íris fixo)
+            local coresArcoiris = {
+                colors.red, colors.orange, colors.yellow, 
+                colors.green, colors.cyan, colors.blue, 
+                colors.purple, colors.pink, colors.magenta
+            }
+            
+            -- CALCULAR FASE DA ONDA PARA ESTA TELA
+            local fase = (i + posicaoOnda) % #coresArcoiris
+            local cor = coresArcoiris[fase + 1]
+            
+            -- PINTAR TELA INTEIRA COM A COR
+            tela.setBackgroundColor(cor)
+            tela.clear()
+            
+            -- EFEITO DE BRILHO/GRADIENTE
+            for x = 1, w do
+                local intensidade = (math.sin((x + posicaoOnda) * 0.2) + 1) / 2
+                if intensidade > 0.8 then
+                    -- Criar faixas mais claras/escuras
+                    for y = 1, h do
+                        if math.random(1, 3) == 1 then
+                            tela.setBackgroundColor(colors.white)
+                            tela.setCursorPos(x, y)
+                            tela.write(" ")
+                        end
+                    end
+                end
+            end
+        end
+        
+        os.sleep(aplicarVelocidade(0.25))
+    end
+    
+    -- Limpar ao sair
+    for i, tela in ipairs(telas) do
+        tela.setBackgroundColor(colors.black)
+        tela.clear()
+    end
+end
+
+-- EFEITO 10 NOVO: PULSO CORACAO
+function pulsoCoracao()
+    print("Pulso Coração - Batidas sincronizadas com cores!")
+    print("Pressione CTRL+T para parar")
+    
+    local batida = 0
+    local pulsando = false
+    executandoEfeito = true
+    
+    -- CORES FORTES PARA PULSO
+    local coresPulso = {
+        colors.red, colors.pink, colors.magenta, 
+        colors.orange, colors.yellow, colors.white
+    }
+    
+    while executandoEfeito do
+        batida = batida + 1
+        
+        if pulsando then
+            -- FASE 1: PULSO FORTE (todas as telas acesas)
+            for i, tela in ipairs(telas) do
+                local corIndex = (batida % #coresPulso) + 1
+                tela.setBackgroundColor(coresPulso[corIndex])
+                tela.clear()
+            end
+            os.sleep(aplicarVelocidade(0.15))
+            
+            -- FASE 2: PULSO SUAVE (metade da intensidade)
+            for i, tela in ipairs(telas) do
+                if i % 2 == 0 then  -- Telas pares ficam mais escuras
+                    tela.setBackgroundColor(colors.black)
+                    tela.clear()
+                end
+            end
+            os.sleep(aplicarVelocidade(0.1))
+            
+            pulsando = false
+        else
+            -- FASE 3: REPOUSO (apagado ou cores suaves)
+            for i, tela in ipairs(telas) do
+                if math.random(1, 3) == 1 then
+                    -- Algumas telas ficam com cor fraca
+                    local corFraca = colors.gray
+                    tela.setBackgroundColor(corFraca)
+                    tela.clear()
+                else
+                    tela.setBackgroundColor(colors.black)
+                    tela.clear()
+                end
+            end
+            os.sleep(aplicarVelocidade(0.4))
+            
+            pulsando = true
+        end
+        
+        -- EFEITO ESPECIAL A CADA 5 BATIDAS
+        if batida % 5 == 0 then
+            -- PULSO RÁPIDO TRIPLO
+            for pulsorapido = 1, 3 do
+                for i, tela in ipairs(telas) do
+                    tela.setBackgroundColor(colors.white)
+                    tela.clear()
+                end
+                os.sleep(aplicarVelocidade(0.05))
+                
+                for i, tela in ipairs(telas) do
+                    tela.setBackgroundColor(colors.black)
+                    tela.clear()
+                end
+                os.sleep(aplicarVelocidade(0.05))
+            end
+        end
+    end
+    
+    -- Limpar ao sair
+    for i, tela in ipairs(telas) do
+        tela.setBackgroundColor(colors.black)
+        tela.clear()
+    end
+end
+
+-- EFEITO 11: STROBE TODAS AS TELAS
+function strobeTodasTelas()
+    print("STROBE - Todas as telas piscando juntas!")
+    print("Pressione CTRL+T para parar")
+    
+    local strobeCount = 0
+    local maxStrobes = 100  -- Limite de segurança
+    executandoEfeito = true
+    
+    while executandoEfeito and strobeCount < maxStrobes do
+        strobeCount = strobeCount + 1
+        
+        -- FASE 1: TODAS AS TELAS LIGADAS
+        for i, tela in ipairs(telas) do
+            local cor = obterCor(i)
+            tela.setBackgroundColor(cor)
+            tela.clear()
+        end
+        os.sleep(aplicarVelocidade(0.08))  -- Muito rápido!
+        
+        -- FASE 2: TODAS AS TELAS DESLIGADAS
+        for i, tela in ipairs(telas) do
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+        end
+        os.sleep(aplicarVelocidade(0.08))  -- Muito rápido!
+        
+        -- Efeito especial a cada 10 strobes
+        if strobeCount % 10 == 0 then
+            -- Piscar com cores diferentes
+            for i, tela in ipairs(telas) do
+                tela.setBackgroundColor(colors.white)
+                tela.clear()
+            end
+            os.sleep(aplicarVelocidade(0.04))
+            
+            for i, tela in ipairs(telas) do
+                tela.setBackgroundColor(colors.black)
+                tela.clear()
+            end
+            os.sleep(aplicarVelocidade(0.04))
+        end
+    end
+    
+    -- Limpar ao sair
+    for i, tela in ipairs(telas) do
+        tela.setBackgroundColor(colors.black)
+        tela.clear()
+    end
+    
+    if strobeCount >= maxStrobes then
+        print("Strobe automaticamente parado após " .. maxStrobes .. " ciclos")
+    end
+end
+
+-- MENU VELOCIDADE
 function menuVelocidade()
     print("\n" .. string.rep("=", 40))
     print("SELECIONE A VELOCIDADE")
@@ -446,20 +693,23 @@ function menuVelocidade()
     print("2. Media")
     print("3. Rapida")
     print("4. Eletronica")
+    print("5. Ultra")
     print(string.rep("=", 40))
     
-    write("Escolha (1-4): ")
+    write("Escolha (1-5): ")
     local escolha = read()
     
     if escolha == "1" then velocidadeAtual = "Lenta"
     elseif escolha == "2" then velocidadeAtual = "Media"
     elseif escolha == "3" then velocidadeAtual = "Rapida"
     elseif escolha == "4" then velocidadeAtual = "Eletronica"
+    elseif escolha == "5" then velocidadeAtual = "Ultra"
     else print("Velocidade mantida: " .. velocidadeAtual) end
     
     os.sleep(1)
 end
 
+-- MENU CORES
 function menuCores()
     print("\n" .. string.rep("=", 35))
     print("SELECIONE CORES")
@@ -502,16 +752,16 @@ function menuCores()
     os.sleep(1)
 end
 
--- MENU PRINCIPAL CORRIGIDO
+-- MENU PRINCIPAL
 function menuPrincipal()
     menuVelocidade()
     menuCores()
     
-    print("\n" .. string.rep("=", 45))
+    print("\n" .. string.rep("=", 50))
     print("EFEITOS DISPONIVEIS - " .. #telas .. " TELAS")
     print("Velocidade: " .. velocidadeAtual)
     print("Modo: " .. modoCorAtual)
-    print(string.rep("=", 45))
+    print(string.rep("=", 50))
     print("1. Pulso Sequencial")
     print("2. Onda")
     print("3. Explosoes de Energia")
@@ -520,12 +770,17 @@ function menuPrincipal()
     print("6. Bolinhas Passando")
     print("7. Piscada Aleatoria")
     print("8. Grupos Sequenciais")
-    print("9. Trocar Configuracoes")
+    print("9. Onda de Cores (NOVO!)")
+    print("10. Pulso Coração (NOVO!)")
+    print("11. Strobe Todas as Telas")
+    print("12. Trocar Configuracoes")
     print("0. Sair")
-    print(string.rep("=", 45))
+    print(string.rep("=", 50))
     
-    write("Escolha o efeito (1-9, 0=sair): ")
+    write("Escolha o efeito (1-12, 0=sair): ")
     local escolha = read()
+    
+    executandoEfeito = true
     
     if escolha == "1" then pulsoSequencial()
     elseif escolha == "2" then onda()
@@ -535,7 +790,10 @@ function menuPrincipal()
     elseif escolha == "6" then bolinhas()
     elseif escolha == "7" then piscadaAleatoria()
     elseif escolha == "8" then gruposSequenciais()
-    elseif escolha == "9" then return true
+    elseif escolha == "9" then ondaDeCores()
+    elseif escolha == "10" then pulsoCoracao()
+    elseif escolha == "11" then strobeTodasTelas()
+    elseif escolha == "12" then return true
     elseif escolha == "0" then 
         for i, tela in ipairs(telas) do
             tela.setBackgroundColor(colors.black)
@@ -552,7 +810,8 @@ end
 
 -- PROGRAMA PRINCIPAL
 function main()
-    print("Sistema Corrigido Iniciado!")
+    print("Sistema Completo Iniciado!")
+    print("Controles: CTRL+T para parar qualquer efeito")
     
     local executando = true
     while executando do
