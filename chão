@@ -1,271 +1,400 @@
 -- =============================================
--- SHOW DE LUZES - BALADA PSICODÉLICA
+-- DJ CONTROLLER - SISTEMA CONTÍNUO
 -- =============================================
 
-print("=== SHOW DE LUZES INICIADO ===")
+print("=== DJ CONTROLLER INICIADO ===")
 
--- Encontra todos os monitores
-local monitores = {peripheral.find("monitor")}
-if not monitores[1] then
-    monitores = {monitores}
+-- Pega TODAS as telas
+local telas = {peripheral.find("monitor")}
+if not telas[1] then telas = {telas} end
+
+print("Telas detectadas: " .. #telas)
+
+-- Configura todas as telas
+for i, tela in ipairs(telas) do
+    tela.setTextScale(0.5)
 end
 
-print("Telas conectadas: " .. #monitores)
-
--- Configura todos os monitores
-for i, mon in ipairs(monitores) do
-    mon.setTextScale(0.5)
-end
-
--- Paleta de cores psicodélicas
-local cores = {
-    colors.red,      -- 1
-    colors.orange,   -- 2  
-    colors.yellow,   -- 3
-    colors.lime,     -- 4
-    colors.green,    -- 5
-    colors.cyan,     -- 6
-    colors.blue,     -- 7
-    colors.purple,   -- 8
-    colors.pink,     -- 9
-    colors.magenta,  -- 10
-    colors.white,    -- 11
-    colors.lightBlue -- 12
+-- MODOS DE COR disponíveis
+local modosCor = {
+    ["Branco"] = { cores = {colors.white} },
+    ["ColoridoAleatorio"] = {
+        cores = { colors.red, colors.orange, colors.yellow, colors.lime, 
+                 colors.green, colors.cyan, colors.lightBlue, colors.blue, 
+                 colors.purple, colors.pink, colors.magenta }
+    },
+    ["CorSolida"] = {
+        cores = { colors.red, colors.orange, colors.yellow, colors.lime,
+                 colors.green, colors.blue, colors.purple, colors.pink }
+    }
 }
 
--- Função para preencher tela com cor (SEM TEXTO)
-function preencherTela(numeroTela, cor)
-    local mon = monitores[numeroTela]
-    if mon then
-        mon.setBackgroundColor(cor)
-        mon.clear()  -- Apenas preenche com a cor, sem texto
+-- VELOCIDADES disponíveis
+local velocidades = {
+    ["Lenta"] = { multiplicador = 2.0 },
+    ["Media"] = { multiplicador = 1.0 },
+    ["Rapida"] = { multiplicador = 0.5 },
+    ["Eletronica"] = { multiplicador = 0.25 }
+}
+
+-- EFEITOS disponíveis
+local efeitos = {
+    "Pulso Sequencial",
+    "Onda", 
+    "Respiração",
+    "Barras Verticais",
+    "Pontos Sequenciais",
+    "Gradiente",
+    "Piscada Aleatória",
+    "Grupos Sequenciais"
+}
+
+-- Variáveis GLOBAIS de controle
+config = {
+    modoCor = "Branco",
+    velocidade = "Media",
+    corSolida = colors.red,
+    efeitoAtual = "Pulso Sequencial",
+    executando = true,
+    precisaAtualizar = true  -- Flag para forçar atualização
+}
+
+-- Função para obter cor
+function obterCor(telaIndex)
+    if config.modoCor == "Branco" then
+        return colors.white
+    elseif config.modoCor == "ColoridoAleatorio" then
+        return modosCor.ColoridoAleatorio.cores[math.random(1, #modosCor.ColoridoAleatorio.cores)]
+    elseif config.modoCor == "CorSolida" then
+        return config.corSolida
     end
+    return colors.white
 end
 
--- Função para resetar todas as telas
-function resetarTelas()
-    for i, mon in ipairs(monitores) do
-        mon.setBackgroundColor(colors.black)
-        mon.clear()
-    end
+-- Função para aplicar velocidade
+function aplicarVelocidade(tempoBase)
+    return tempoBase * velocidades[config.velocidade].multiplicador
 end
 
--- =======================
--- NOVOS EFEITOS:
--- =======================
-
--- 1. ONDA SEQUENCIAL (sem texto)
-function ondaSequencial()
-    print("Efeito: Onda Sequencial")
+-- EFEITOS (agora verificam a flag de atualização)
+function pulsoSequencial()
+    local telaAtiva = 1
     
-    local sequencia = 1
-    
-    while true do
-        for i = 1, #monitores do
-            local cor = cores[(sequencia + i - 2) % #cores + 1]
-            preencherTela(i, cor)
-            os.sleep(0.2)  -- Velocidade da onda
-        end
-        os.sleep(0.3)
-        resetarTelas()
-        os.sleep(0.1)
-        
-        sequencia = sequencia + 1
-    end
-end
-
--- 2. CAOS COLORIDO (sem texto)
-function caosColorido()
-    print("Efeito: Caos Colorido")
-    
-    while true do
-        local telaAleatoria = math.random(1, #monitores)
-        local corAleatoria = cores[math.random(1, #cores)]
-        
-        preencherTela(telaAleatoria, corAleatoria)
-        os.sleep(math.random(5, 20) / 100)  -- Mais rápido
-        
-        resetarTelas()
-        os.sleep(0.05)
-    end
-end
-
--- 3. PULSAR SINCRONIZADO (sem texto)
-function pulsarSincronizado()
-    print("Efeito: Pulsar Sincronizado")
-    
-    local pulsos = 0
-    
-    while true do
-        pulsos = pulsos + 1
-        local corBase = cores[(pulsos - 1) % #cores + 1]
-        
-        -- Todas piscam juntas
-        for i = 1, #monitores do
-            preencherTela(i, corBase)
+    while config.executando and config.efeitoAtual == "Pulso Sequencial" do
+        if config.precisaAtualizar then
+            -- Atualiza display
+            print("🎵 " .. config.efeitoAtual .. " | 🎨 " .. config.modoCor .. " | 🐢 " .. config.velocidade)
+            config.precisaAtualizar = false
         end
         
-        os.sleep(0.3)  -- Tempo ligado
-        resetarTelas() -- Reseta
-        os.sleep(0.2)  -- Tempo desligado
+        -- Apaga todas
+        for i, tela in ipairs(telas) do
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+        end
+        
+        -- Acende uma tela
+        local cor = obterCor(telaAtiva)
+        telas[telaAtiva].setBackgroundColor(cor)
+        telas[telaAtiva].clear()
+        
+        -- Próxima tela
+        telaAtiva = (telaAtiva % #telas) + 1
+        sleep(aplicarVelocidade(0.3))
     end
 end
 
--- 4. GRADIENTE HORIZONTAL
-function gradienteHorizontal()
-    print("Efeito: Gradiente Horizontal")
+function onda()
+    local posicao = 0
     
-    while true do
-        for inicioCor = 1, #cores do
-            for i = 1, #monitores do
-                local corIndex = (inicioCor + i - 2) % #cores + 1
-                preencherTela(i, cores[corIndex])
-            end
-            os.sleep(0.4)
-        end
-    end
-end
-
--- 5. XENON (flash rápido)
-function efeitoXenon()
-    print("Efeito: Xenon")
-    
-    while true do
-        -- Flash branco rápido em todas as telas
-        for i = 1, #monitores do
-            preencherTela(i, colors.white)
-        end
-        os.sleep(0.1)
-        
-        resetarTelas()
-        os.sleep(0.1)
-        
-        -- Flash colorido
-        local corFlash = cores[math.random(1, #cores)]
-        for i = 1, #monitores do
-            preencherTela(i, corFlash)
-        end
-        os.sleep(0.15)
-        
-        resetarTelas()
-        os.sleep(0.3)
-    end
-end
-
--- 6. RESPIRAR (fade simulado)
-function efeitoRespirar()
-    print("Efeito: Respirar")
-    
-    local fase = 1
-    
-    while true do
-        local corBase = cores[(fase - 1) % #cores + 1]
-        
-        -- "Respira" por 3 ciclos com a mesma cor
-        for ciclo = 1, 3 do
-            -- Aumenta brilho (cores mais claras)
-            for i = 1, #monitores do
-                preencherTela(i, corBase)
-            end
-            os.sleep(0.4)
-            
-            -- Diminui brilho (volta ao preto)
-            resetarTelas()
-            os.sleep(0.3)
+    while config.executando and config.efeitoAtual == "Onda" do
+        if config.precisaAtualizar then
+            print("🎵 " .. config.efeitoAtual .. " | 🎨 " .. config.modoCor .. " | 🐢 " .. config.velocidade)
+            config.precisaAtualizar = false
         end
         
-        fase = fase + 1
-    end
-end
-
--- 7. ARCO-ÍRIS RODANDO
-function arcoirisRodando()
-    print("Efeito: Arco-Íris Rodando")
-    
-    local posicao = 1
-    
-    while true do
-        for i = 1, #monitores do
-            local corIndex = (posicao + i - 2) % #cores + 1
-            preencherTela(i, cores[corIndex])
-        end
-        
-        os.sleep(0.3)
         posicao = posicao + 1
         
-        if posicao > #cores then
-            posicao = 1
-        end
-    end
-end
-
--- 8. ESTROBOSCOPIO ALEATÓRIO
-function estroboscopio()
-    print("Efeito: Estroboscópio")
-    
-    while true do
-        -- Ativa telas aleatórias
-        for i = 1, #monitores do
-            if math.random(1, 2) == 1 then  -- 50% de chance
-                preencherTela(i, colors.white)
+        for i, tela in ipairs(telas) do
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+            
+            if (posicao % #telas) + 1 == i then
+                local cor = obterCor(i)
+                tela.setBackgroundColor(cor)
+                tela.clear()
             end
         end
         
-        os.sleep(0.08)  -- Muito rápido
-        resetarTelas()
-        os.sleep(0.12)
+        sleep(aplicarVelocidade(0.2))
     end
 end
 
--- Menu principal melhorado
-function menu()
-    resetarTelas()
-    
-    print("\n=== SHOW DE LUZES - BALADA ===")
-    print("1.  Onda Sequencial")
-    print("2.  Caos Colorido") 
-    print("3.  Pulsar Sincronizado")
-    print("4.  Gradiente Horizontal")
-    print("5.  Xenon (Flash)")
-    print("6.  Respirar")
-    print("7.  Arco-Íris Rodando")
-    print("8.  Estroboscópio")
-    print("9.  Sair")
-    
-    write("Escolha um efeito (1-9): ")
-    local escolha = read()
-    
-    if escolha == "1" then
-        ondaSequencial()
-    elseif escolha == "2" then
-        caosColorido()
-    elseif escolha == "3" then
-        pulsarSincronizado()
-    elseif escolha == "4" then
-        gradienteHorizontal()
-    elseif escolha == "5" then
-        efeitoXenon()
-    elseif escolha == "6" then
-        efeitoRespirar()
-    elseif escolha == "7" then
-        arcoirisRodando()
-    elseif escolha == "8" then
-        estroboscopio()
-    elseif escolha == "9" then
-        print("Show encerrado!")
-        resetarTelas()
-        return
-    else
-        print("Opção inválida!")
-        os.sleep(1)
-        menu()
+function respiracao()
+    while config.executando and config.efeitoAtual == "Respiração" do
+        if config.precisaAtualizar then
+            print("🎵 " .. config.efeitoAtual .. " | 🎨 " .. config.modoCor .. " | 🐢 " .. config.velocidade)
+            config.precisaAtualizar = false
+        end
+        
+        -- Acende
+        local cor = obterCor(1)
+        for i, tela in ipairs(telas) do
+            tela.setBackgroundColor(cor)
+            tela.clear()
+        end
+        sleep(aplicarVelocidade(0.8))
+        
+        -- Apaga
+        for i, tela in ipairs(telas) do
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+        end
+        sleep(aplicarVelocidade(0.4))
     end
 end
 
--- Inicialização
-print("Show de Luzes pronto com " .. #monitores .. " telas!")
-print("Pressione Ctrl+T para parar qualquer efeito")
-os.sleep(2)
+function barrasVerticais()
+    local offset = 0
+    
+    while config.executando and config.efeitoAtual == "Barras Verticais" do
+        if config.precisaAtualizar then
+            print("🎵 " .. config.efeitoAtual .. " | 🎨 " .. config.modoCor .. " | 🐢 " .. config.velocidade)
+            config.precisaAtualizar = false
+        end
+        
+        offset = offset + 1
+        
+        for i, tela in ipairs(telas) do
+            local w, h = tela.getSize()
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+            
+            for barra = 1, 2 do
+                local x = (offset + barra * 4 + i * 2) % w + 1
+                local cor = obterCor(i)
+                
+                for y = 1, h do
+                    tela.setBackgroundColor(cor)
+                    tela.setCursorPos(x, y)
+                    tela.write(" ")
+                end
+            end
+        end
+        
+        sleep(aplicarVelocidade(0.15))
+    end
+end
 
--- Inicia o menu
-menu()
+-- [Adicione aqui os outros efeitos seguindo o mesmo padrão...]
+
+function pontosSequenciais()
+    local tempo = 0
+    
+    while config.executando and config.efeitoAtual == "Pontos Sequenciais" do
+        if config.precisaAtualizar then
+            print("🎵 " .. config.efeitoAtual .. " | 🎨 " .. config.modoCor .. " | 🐢 " .. config.velocidade)
+            config.precisaAtualizar = false
+        end
+        
+        tempo = tempo + 1
+        
+        for i, tela in ipairs(telas) do
+            local w, h = tela.getSize()
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+            
+            if (tempo % #telas) + 1 == i then
+                local x, y = math.floor(w/2), math.floor(h/2)
+                local cor = obterCor(i)
+                
+                tela.setBackgroundColor(cor)
+                tela.setCursorPos(x, y)
+                tela.write(" ")
+                tela.setCursorPos(x+1, y)
+                tela.write(" ")
+                tela.setCursorPos(x-1, y)
+                tela.write(" ")
+            end
+        end
+        
+        sleep(aplicarVelocidade(0.25))
+    end
+end
+
+-- Função de sleep que verifica se precisa parar
+function sleep(tempo)
+    local fim = os.clock() + tempo
+    while os.clock() < fim do
+        if not config.executando or config.precisaAtualizar then
+            break
+        end
+    end
+end
+
+-- MENU DE CONTROLE RÁPIDO
+function menuControle()
+    while config.executando do
+        print("\n" .. string.rep("=", 50))
+        print("🎛️  DJ CONTROLLER - CONTROLE RÁPIDO")
+        print(string.rep("=", 50))
+        print("EFEITO ATUAL: " .. config.efeitoAtual)
+        print("CONFIG: " .. config.modoCor .. " | " .. config.velocidade)
+        print(string.rep("=", 50))
+        print("1. 🎵 Trocar Efeito")
+        print("2. 🎨 Trocar Cores") 
+        print("3. 🐢 Trocar Velocidade")
+        print("4. 🔄 Aplicar Configuração Atual")
+        print("0. 🚪 Desligar Sistema")
+        print(string.rep("=", 50))
+        
+        write("Opção (1-4, 0=desligar): ")
+        local opcao = read()
+        
+        if opcao == "1" then
+            -- Menu de efeitos
+            print("\n" .. string.rep("-", 30))
+            print("🎵 SELECIONAR EFEITO:")
+            for i, efeito in ipairs(efeitos) do
+                print(i .. ". " .. efeito)
+            end
+            print(string.rep("-", 30))
+            
+            write("Escolha o efeito (1-" .. #efeitos .. "): ")
+            local escolha = tonumber(read())
+            
+            if escolha and escolha >= 1 and escolha <= #efeitos then
+                config.efeitoAtual = efeitos[escolha]
+                config.precisaAtualizar = true
+                print("✅ Novo efeito: " .. config.efeitoAtual)
+            else
+                print("❌ Efeito inválido!")
+            end
+            
+        elseif opcao == "2" then
+            -- Menu de cores
+            print("\n" .. string.rep("-", 30))
+            print("🎨 SELECIONAR CORES:")
+            print("1. ⚪ Branco & Preto")
+            print("2. 🌈 Colorido Aleatório")
+            print("3. 🎨 Cor Sólida")
+            print(string.rep("-", 30))
+            
+            write("Escolha (1-3): ")
+            local escolha = read()
+            
+            if escolha == "1" then
+                config.modoCor = "Branco"
+                print("✅ Modo: Branco & Preto")
+            elseif escolha == "2" then
+                config.modoCor = "ColoridoAleatorio" 
+                print("✅ Modo: Colorido Aleatório")
+            elseif escolha == "3" then
+                config.modoCor = "CorSolida"
+                print("🎨 Escolha a cor sólida:")
+                print("1.🔴 2.🟠 3.🟡 4.🟢 5.🔵 6.🟣 7.🎀")
+                write("Cor (1-7): ")
+                local corEscolha = tonumber(read())
+                local cores = {colors.red, colors.orange, colors.yellow, colors.green, colors.blue, colors.purple, colors.pink}
+                if corEscolha and corEscolha >=1 and corEscolha <=7 then
+                    config.corSolida = cores[corEscolha]
+                    print("✅ Cor sólida selecionada!")
+                end
+            else
+                print("❌ Opção inválida!")
+            end
+            config.precisaAtualizar = true
+            
+        elseif opcao == "3" then
+            -- Menu de velocidade
+            print("\n" .. string.rep("-", 30))
+            print("🐢 SELECIONAR VELOCIDADE:")
+            print("1. 🐢 Lenta")
+            print("2. 🚶 Média") 
+            print("3. 🏃 Rápida")
+            print("4. ⚡ Eletrônica")
+            print(string.rep("-", 30))
+            
+            write("Escolha (1-4): ")
+            local escolha = read()
+            
+            if escolha == "1" then config.velocidade = "Lenta"
+            elseif escolha == "2" then config.velocidade = "Media"
+            elseif escolha == "3" then config.velocidade = "Rapida" 
+            elseif escolha == "4" then config.velocidade = "Eletronica"
+            else print("❌ Opção inválida!")
+            end
+            config.precisaAtualizar = true
+            
+        elseif opcao == "4" then
+            config.precisaAtualizar = true
+            print("✅ Configuração aplicada!")
+            
+        elseif opcao == "0" then
+            config.executando = false
+            print("🔄 Desligando sistema...")
+            
+        else
+            print("❌ Opção inválida!")
+        end
+        
+        sleep(0.5)  -- Pequena pausa entre menus
+    end
+end
+
+-- EXECUTOR PRINCIPAL DE EFEITOS
+function executarEfeitos()
+    while config.executando do
+        -- Limpa tudo ao trocar de efeito
+        if config.precisaAtualizar then
+            for i, tela in ipairs(telas) do
+                tela.setBackgroundColor(colors.black)
+                tela.clear()
+            end
+        end
+        
+        -- Executa o efeito atual
+        if config.efeitoAtual == "Pulso Sequencial" then pulsoSequencial()
+        elseif config.efeitoAtual == "Onda" then onda()
+        elseif config.efeitoAtual == "Respiração" then respiracao()
+        elseif config.efeitoAtual == "Barras Verticais" then barrasVerticais()
+        elseif config.efeitoAtual == "Pontos Sequenciais" then pontosSequenciais()
+        -- [Adicione as outras condições aqui...]
+        else
+            -- Efeito padrão se algo der errado
+            print("⚠️  Efeito não encontrado, usando padrão")
+            config.efeitoAtual = "Pulso Sequencial"
+            config.precisaAtualizar = true
+        end
+    end
+end
+
+-- PROGRAMA PRINCIPAL
+function main()
+    print("🚀 Iniciando DJ Controller...")
+    print("💡 Dica: Use 'Ctrl+T' para emergências")
+    
+    -- Inicia duas threads "paralelas"
+    local function iniciarEfeitos()
+        pcall(executarEfeitos)
+    end
+    
+    local function iniciarControle()
+        pcall(menuControle)
+    end
+    
+    -- Executa ambas (em pseudo-paralelismo)
+    iniciarEfeitos()
+    -- Esta linha só executa quando os efeitos param
+    
+    -- Limpeza final
+    print("🧹 Limpando telas...")
+    for i, tela in ipairs(telas) do
+        tela.setBackgroundColor(colors.black)
+        tela.clear()
+    end
+    print("✅ Sistema desligado!")
+end
+
+-- INICIAR
+main()
