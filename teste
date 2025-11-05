@@ -1,28 +1,23 @@
 -- =============================================
--- EFEITOS DAFT PUNK - LUZ BRANCA
+-- DAFT PUNK - TELAS ILIMITADAS
 -- =============================================
 
-print("=== DAFT PUNK MODE ===")
+print("=== DAFT PUNK - TELAS ILIMITADAS ===")
 
--- Pega as 4 telas
+-- Pega TODAS as telas disponíveis
 local telas = {peripheral.find("monitor")}
 if not telas[1] then telas = {telas} end
-if #telas > 4 then
-    local temp = {}
-    for i = 1, 4 do temp[i] = telas[i] end
-    telas = temp
-end
 
-print("Telas: " .. #telas)
+print("Telas detectadas: " .. #telas)
 
--- Configura
+-- Configura todas as telas
 for i, tela in ipairs(telas) do
     tela.setTextScale(0.5)
 end
 
--- EFEITO 1: PULSO BRANCO SEQUENCIAL (Daft Punk style)
+-- EFEITO 1: PULSO SEQUENCIAL (funciona com qualquer número de telas)
 function pulsoSequencial()
-    print("Pulso Sequencial - Daft Punk")
+    print("Pulso Sequencial - " .. #telas .. " telas")
     
     local telaAtiva = 1
     
@@ -37,17 +32,17 @@ function pulsoSequencial()
         telas[telaAtiva].setBackgroundColor(colors.white)
         telas[telaAtiva].clear()
         
-        -- Próxima tela
+        -- Próxima tela (funciona com qualquer quantidade)
         telaAtiva = telaAtiva + 1
         if telaAtiva > #telas then telaAtiva = 1 end
         
-        os.sleep(0.3)  -- Velocidade do pulso
+        os.sleep(0.3)
     end
 end
 
--- EFEITO 2: ONDA BRANCA
+-- EFEITO 2: ONDA BRANCA (adaptável)
 function ondaBranca()
-    print("Onda Branca")
+    print("Onda Branca - " .. #telas .. " telas")
     
     local posicao = 0
     
@@ -55,7 +50,6 @@ function ondaBranca()
         posicao = posicao + 1
         
         for i, tela in ipairs(telas) do
-            local w, h = tela.getSize()
             tela.setBackgroundColor(colors.black)
             tela.clear()
             
@@ -72,39 +66,32 @@ function ondaBranca()
     end
 end
 
--- EFEITO 3: RESPIRAÇÃO BRANCA
+-- EFEITO 3: RESPIRAÇÃO BRANCA (todas juntas)
 function respiracao()
-    print("Respiração Branca")
-    
-    local tempo = 0
+    print("Respiração Branca - " .. #telas .. " telas")
     
     while true do
-        tempo = tempo + 0.1
-        
+        -- Acende todas
         for i, tela in ipairs(telas) do
-            local w, h = tela.getSize()
-            
-            -- Todas as telas respiram juntas
             tela.setBackgroundColor(colors.white)
             tela.clear()
         end
         
-        -- Pausa (respiração)
-        os.sleep(0.8)
+        os.sleep(0.8)  -- Tempo aceso
         
-        -- Apaga
+        -- Apaga todas
         for i, tela in ipairs(telas) do
             tela.setBackgroundColor(colors.black)
             tela.clear()
         end
         
-        os.sleep(0.4)
+        os.sleep(0.4)  -- Tempo apagado
     end
 end
 
--- EFEITO 4: BARRAS VERTICAIS BRANCAS
+-- EFEITO 4: BARRAS VERTICAIS (independente por tela)
 function barrasVerticais()
-    print("Barras Verticais Brancas")
+    print("Barras Verticais - " .. #telas .. " telas")
     
     local offset = 0
     
@@ -116,11 +103,10 @@ function barrasVerticais()
             tela.setBackgroundColor(colors.black)
             tela.clear()
             
-            -- Barras brancas verticais se movendo
-            for barra = 1, 2 do  -- 2 barras por tela
-                local x = (offset + barra * 4) % w + 1
+            -- Barras brancas verticais (cada tela tem seu próprio padrão)
+            for barra = 1, 2 do
+                local x = (offset + barra * 4 + i * 2) % w + 1
                 
-                -- Desenha barra vertical branca
                 for y = 1, h do
                     tela.setBackgroundColor(colors.white)
                     tela.setCursorPos(x, y)
@@ -133,9 +119,9 @@ function barrasVerticais()
     end
 end
 
--- EFEITO 5: PONTOS BRANCOS SEQUENCIAIS
+-- EFEITO 5: PONTOS SEQUENCIAIS (funciona com N telas)
 function pontosSequenciais()
-    print("Pontos Sequenciais")
+    print("Pontos Sequenciais - " .. #telas .. " telas")
     
     local tempo = 0
     
@@ -147,7 +133,7 @@ function pontosSequenciais()
             tela.setBackgroundColor(colors.black)
             tela.clear()
             
-            -- Um ponto branco que se move sequencialmente pelas telas
+            -- Uma tela de cada vez mostra o ponto
             if (tempo % #telas) + 1 == i then
                 local x = math.floor(w / 2)
                 local y = math.floor(h / 2)
@@ -156,7 +142,7 @@ function pontosSequenciais()
                 tela.setCursorPos(x, y)
                 tela.write(" ")
                 
-                -- Pequeno brilho ao redor
+                -- Pequeno brilho
                 tela.setCursorPos(x + 1, y)
                 tela.write(" ")
                 tela.setCursorPos(x - 1, y)
@@ -168,9 +154,9 @@ function pontosSequenciais()
     end
 end
 
--- EFEITO 6: GRADIENTE CINZA (Daft Punk elegante)
+-- EFEITO 6: GRADIENTE CINZA (cada tela individual)
 function gradientCinza()
-    print("Gradiente Cinza")
+    print("Gradiente Cinza - " .. #telas .. " telas")
     
     local tonsCinza = {
         colors.black,
@@ -189,9 +175,9 @@ function gradientCinza()
         for i, tela in ipairs(telas) do
             local w, h = tela.getSize()
             
-            -- Gradiente de cinza horizontal
+            -- Cada tela tem seu próprio gradiente
             for x = 1, w do
-                local progresso = (x + posicao) % #tonsCinza
+                local progresso = (x + posicao + i * 3) % #tonsCinza
                 local cor = tonsCinza[progresso + 1]
                 
                 for y = 1, h do
@@ -206,9 +192,9 @@ function gradientCinza()
     end
 end
 
--- EFEITO 7: PISCADA ALEATÓRIA (não todas ligadas)
+-- EFEITO 7: PISCADA ALEATÓRIA (N telas - nunca todas)
 function piscadaAleatoria()
-    print("Piscada Aleatória")
+    print("Piscada Aleatória - " .. #telas .. " telas")
     
     while true do
         -- Apaga tudo
@@ -217,8 +203,9 @@ function piscadaAleatoria()
             tela.clear()
         end
         
-        -- Acende algumas telas aleatoriamente (não todas)
-        local telasParaAcender = math.random(1, #telas - 1)  -- Nunca todas
+        -- Acende algumas telas aleatoriamente (NUNCA todas)
+        local maxTelas = math.max(1, #telas - 1)  -- No mínimo 1, no máximo total-1
+        local telasParaAcender = math.random(1, maxTelas)
         
         for a = 1, telasParaAcender do
             local telaAleatoria = math.random(1, #telas)
@@ -238,11 +225,46 @@ function piscadaAleatoria()
     end
 end
 
--- Menu Daft Punk
+-- EFEITO 8: GRUPOS SEQUENCIAIS (para muitas telas)
+function gruposSequenciais()
+    print("Grupos Sequenciais - " .. #telas .. " telas")
+    
+    local grupoAtual = 1
+    local telasPorGrupo = math.max(1, math.floor(#telas / 3))  -- Divide em ~3 grupos
+    
+    while true do
+        -- Apaga tudo
+        for i, tela in ipairs(telas) do
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+        end
+        
+        -- Acende um grupo de telas
+        local inicio = (grupoAtual - 1) * telasPorGrupo + 1
+        local fim = math.min(grupoAtual * telasPorGrupo, #telas)
+        
+        for i = inicio, fim do
+            if telas[i] then
+                telas[i].setBackgroundColor(colors.white)
+                telas[i].clear()
+            end
+        end
+        
+        -- Próximo grupo
+        grupoAtual = grupoAtual + 1
+        if grupoAtual > math.ceil(#telas / telasPorGrupo) then
+            grupoAtual = 1
+        end
+        
+        os.sleep(0.5)
+    end
+end
+
+-- Menu para N telas
 function menu()
-    print("\n" .. string.rep("=", 30))
-    print("DAFT PUNK - LUZ BRANCA")
-    print(string.rep("=", 30))
+    print("\n" .. string.rep("=", 35))
+    print("DAFT PUNK - " .. #telas .. " TELAS")
+    print(string.rep("=", 35))
     print("1. Pulso Sequencial")
     print("2. Onda Branca")
     print("3. Respiração")
@@ -250,9 +272,10 @@ function menu()
     print("5. Pontos Sequenciais")
     print("6. Gradiente Cinza")
     print("7. Piscada Aleatória")
-    print(string.rep("=", 30))
+    print("8. Grupos Sequenciais")
+    print(string.rep("=", 35))
     
-    write("Escolha (1-7): ")
+    write("Escolha (1-8): ")
     local e = read()
     
     if e == "1" then pulsoSequencial()
@@ -262,6 +285,7 @@ function menu()
     elseif e == "5" then pontosSequenciais()
     elseif e == "6" then gradientCinza()
     elseif e == "7" then piscadaAleatoria()
+    elseif e == "8" then gruposSequenciais()
     else print("Inválido!"); os.sleep(1) end
 end
 
