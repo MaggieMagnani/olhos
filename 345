@@ -1,0 +1,201 @@
+-- =============================================
+-- ENXAME DE PÁSSAROS - MV ITZY STYLE
+-- =============================================
+
+print("=== INICIANDO ENXAME DE PÁSSAROS ===")
+
+-- Pega TODAS as telas
+local telas = {peripheral.find("monitor")}
+if not telas[1] then telas = {telas} end
+
+print("Telas detectadas: " .. #telas)
+
+-- Configura todas as telas
+for i, tela in ipairs(telas) do
+    tela.setTextScale(0.5)
+    tela.setBackgroundColor(colors.black)
+    tela.clear()
+end
+
+-- Sistema de pássaros
+local passaros = {}
+local tempo = 0
+local centroX, centroY = 4, 3  -- Centro de cada tela
+local larguraTela, alturaTela = 8, 5
+
+-- Criar enxame de pássaros
+function criarEnxame(quantidade)
+    passaros = {}
+    
+    for i = 1, quantidade do
+        local angulo = (i / quantidade) * math.pi * 2
+        local raio = math.random(2, 4)
+        
+        table.insert(passaros, {
+            x = centroX + math.cos(angulo) * raio,
+            y = centroY + math.sin(angulo) * raio,
+            raio = raio,
+            velocidadeAngular = 0.1 + math.random() * 0.1,
+            fase = math.random() * math.pi * 2,
+            tamanho = 1,  -- Pássaro pequeno
+            cor = colors.white,
+            estiloAsas = math.random(1, 3)  -- Diferentes estilos de asas
+        })
+    end
+    
+    print("Enxame criado: " .. quantidade .. " pássaros")
+end
+
+-- Desenhar um pássaro simples
+function desenharPassaro(tela, x, y, estilo, fase)
+    -- Corpo do pássaro (ponto central)
+    if x >= 1 and x <= larguraTela and y >= 1 and y <= alturaTela then
+        tela.setBackgroundColor(colors.white)
+        tela.setCursorPos(x, y)
+        tela.write(" ")
+    end
+    
+    -- Asas (animação de bater asas)
+    local offsetAsa = math.sin(fase) * 0.8
+    
+    if estilo == 1 then
+        -- Asas diagonais
+        desenharPixel(tela, x-1, math.floor(y - offsetAsa), colors.white)
+        desenharPixel(tela, x+1, math.floor(y + offsetAsa), colors.white)
+    elseif estilo == 2 then
+        -- Asas horizontais
+        desenharPixel(tela, x-1, y, colors.white)
+        desenharPixel(tela, x+1, y, colors.white)
+        desenharPixel(tela, x, math.floor(y - offsetAsa), colors.white)
+    else
+        -- Asas em V
+        desenharPixel(tela, x-1, math.floor(y - offsetAsa), colors.white)
+        desenharPixel(tela, x+1, math.floor(y - offsetAsa), colors.white)
+    end
+end
+
+-- Desenhar pixel com verificação de limites
+function desenharPixel(tela, x, y, cor)
+    if x >= 1 and x <= larguraTela and y >= 1 and y <= alturaTela then
+        tela.setBackgroundColor(cor)
+        tela.setCursorPos(x, y)
+        tela.write(" ")
+    end
+end
+
+-- Padrão: Círculos Concêntricos (como no MV)
+function movimentoCirculosConcentricos(t)
+    for i, passaro in ipairs(passaros) do
+        local angulo = passaro.fase + t * passaro.velocidadeAngular
+        passaro.x = centroX + math.cos(angulo) * passaro.raio
+        passaro.y = centroY + math.sin(angulo) * passaro.raio
+        passaro.fase = passaro.fase + 0.02  -- Fase muda lentamente
+    end
+end
+
+-- Padrão: Espiral Expansiva
+function movimentoEspiral(t)
+    for i, passaro in ipairs(passaros) do
+        local progresso = i / #passaros
+        local angulo = t * 0.5 + progresso * math.pi * 4
+        local raio = 1 + progresso * 6 * (0.8 + 0.2 * math.sin(t * 0.3))
+        
+        passaro.x = centroX + math.cos(angulo) * raio
+        passaro.y = centroY + math.sin(angulo) * raio
+    end
+end
+
+-- Padrão: Aglomerado em Movimento
+function movimentoAglomerado(t)
+    local centroMovelX = centroX + math.sin(t * 0.2) * 2
+    local centroMovelY = centroY + math.cos(t * 0.3) * 1.5
+    
+    for i, passaro in ipairs(passaros) do
+        local angulo = passaro.fase + t * 0.8
+        local variacao = math.sin(t * 2 + i) * 0.5
+        
+        passaro.x = centroMovelX + math.cos(angulo) * (2 + variacao)
+        passaro.y = centroMovelY + math.sin(angulo) * (1.5 + variacao)
+    end
+end
+
+-- Padrão: Onda Circular
+function movimentoOnda(t)
+    for i, passaro in ipairs(passaros) do
+        local anguloBase = (i / #passaros) * math.pi * 2
+        local onda = math.sin(t * 2 + anguloBase * 3) * 1.5
+        
+        passaro.x = centroX + math.cos(anguloBase) * (3 + onda)
+        passaro.y = centroY + math.sin(anguloBase) * (2 + onda * 0.7)
+    end
+end
+
+-- Animação principal
+function executarAnimacao()
+    local padroes = {
+        movimentoCirculosConcentricos,
+        movimentoEspiral, 
+        movimentoAglomerado,
+        movimentoOnda
+    }
+    
+    local nomesPadroes = {
+        "Círculos Concêntricos",
+        "Espiral Expansiva",
+        "Aglomerado em Movimento", 
+        "Onda Circular"
+    }
+    
+    local padraoAtual = 1
+    local ultimaTroca = os.time()
+    
+    -- Criar enxame (1 pássaro por tela pra começar)
+    criarEnxame(#telas * 3)  -- 3 pássaros por tela
+    
+    print("\n=== ENXAME DE PÁSSAROS ATIVADO ===")
+    print("Padrão: " .. nomesPadroes[padraoAtual])
+    print("Pássaros: " .. #passaros)
+    print("Pressione Ctrl+T para parar")
+    print("==============================\n")
+    
+    while true do
+        -- Trocar padrão a cada 30 segundos
+        if os.time() - ultimaTroca > 30 then
+            padraoAtual = (padraoAtual % #padroes) + 1
+            ultimaTroca = os.time()
+            print("Mudando para: " .. nomesPadroes[padraoAtual])
+        end
+        
+        -- Atualizar movimento dos pássaros
+        padroes[padraoAtual](tempo)
+        
+        -- Limpar e redesenhAR em cada tela
+        for i, tela in ipairs(telas) do
+            tela.setBackgroundColor(colors.black)
+            tela.clear()
+            
+            -- Desenhar pássaros que estão nesta tela
+            for j, passaro in ipairs(passaros) do
+                -- Cada tela mostra pássaros diferentes
+                if j % #telas == (i - 1) then
+                    desenharPassaro(tela, 
+                        math.floor(passaro.x), 
+                        math.floor(passaro.y), 
+                        passaro.estiloAsas, 
+                        tempo + passaro.fase
+                    )
+                end
+            end
+        end
+        
+        tempo = tempo + 0.1
+        os.sleep(0.1)
+    end
+end
+
+-- Programa principal
+if #telas == 0 then
+    print("ERRO: Nenhuma tela detectada!")
+else
+    executarAnimacao()
+end
