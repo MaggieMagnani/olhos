@@ -1,0 +1,308 @@
+-- OLHO GIGANTE - Todas as telas em um computador
+-- Configuração automática para quantas telas você tiver!
+
+local monitores = {}
+local larguraTotal, alturaTotal = 0, 0
+local tempo = 0
+
+-- Descobrir e configurar TODOS os monitores
+function descobrirMonitores()
+    print("Procurando monitores...")
+    local sides = {"top", "bottom", "left", "right", "front", "back"}
+    local count = 0
+    
+    for _, side in ipairs(sides) do
+        if peripheral.isPresent(side) and peripheral.getType(side) == "monitor" then
+            local monitor = peripheral.wrap(side)
+            monitor.setTextScale(0.5)  -- Modo alta resolução
+            monitor.setBackgroundColor(colors.black)
+            monitor.clear()
+            
+            -- Detectar tamanho do monitor
+            local largura, altura = 8, 5  -- Padrão para monitors grandes
+            if string.find(side, "left") or string.find(side, "right") then
+                largura, altura = 5, 3   -- Tamanho menor se for monitor lateral
+            end
+            
+            monitores[side] = {
+                objeto = monitor,
+                largura = largura,
+                altura = altura,
+                posX = 1,  -- Será calculado depois
+                posY = 1   -- Será calculado depois
+            }
+            count = count + 1
+            print("Monitor encontrado: " .. side .. " (" .. largura .. "x" .. altura .. ")")
+        end
+    end
+    
+    -- Calcular grid automático de monitores
+    calcularGridMonitores()
+    
+    print("Total de monitores configurados: " .. count)
+    print("Tela gigante: " .. larguraTotal .. "x" .. alturaTotal)
+    return count
+end
+
+-- Organizar monitores em grid automático
+function calcularGridMonitores()
+    local monitoresArray = {}
+    for side, info in pairs(monitores) do
+        table.insert(monitoresArray, {side = side, info = info})
+    end
+    
+    -- Ordenar por posição preferencial
+    table.sort(monitoresArray, function(a, b)
+        local ordem = {top = 1, bottom = 2, front = 3, back = 4, left = 5, right = 6}
+        return (ordem[a.side] or 7) < (ordem[b.side] or 7)
+    end)
+    
+    -- Calcular posições no grid gigante
+    local xAtual, yAtual = 1, 1
+    local maxY = 0
+    
+    for _, monitorData in ipairs(monitoresArray) do
+        local side = monitorData.side
+        local info = monitorData.info
+        
+        info.posX = xAtual
+        info.posY = yAtual
+        
+        -- Atualizar tamanho total
+        larguraTotal = math.max(larguraTotal, xAtual + info.largura - 1)
+        alturaTotal = math.max(alturaTotal, yAtual + info.altura - 1)
+        maxY = math.max(maxY, info.altura)
+        
+        -- Mover para próxima posição (grid horizontal)
+        xAtual = xAtual + info.largura + 1  -- +1 para espaçamento
+        
+        -- Se chegou no limite, quebra linha
+        if xAtual > 30 then  -- Limite arbitrário para quebra
+            xAtual = 1
+            yAtual = yAtual + maxY + 1
+            maxY = 0
+        end
+    end
+end
+
+-- Limpar TODAS as telas
+function limparTodasTelas()
+    for side, info in pairs(monitores) do
+        info.objeto.setBackgroundColor(colors.black)
+        info.objeto.clear()
+    end
+end
+
+-- Desenhar pixel em coordenada global da tela gigante
+function desenharPixel(xGlobal, yGlobal, cor)
+    for side, info in pairs(monitores) do
+        -- Verificar se este monitor contém estas coordenadas globais
+        if xGlobal >= info.posX and xGlobal < info.posX + info.largura and
+           yGlobal >= info.posY and yGlobal < info.posY + info.altura then
+            
+            -- Converter coordenada global para local do monitor
+            local xLocal = xGlobal - info.posX + 1
+            local yLocal = yGlobal - info.posY + 1
+            
+            -- Desenhar no monitor
+            info.objeto.setBackgroundColor(cor)
+            info.objeto.setCursorPos(xLocal, yLocal)
+            info.objeto.write(" ")
+            return true
+        end
+    end
+    return false
+end
+
+-- Desenhar o olho completo em posição global
+function desenharOlho(xGlobal, yGlobal)
+    -- Limpar tudo primeiro
+    limparTodasTelas()
+    
+    -- Desenhar parte branca do olho
+    for x = -4, 4 do
+        for y = -3, 3 do
+            -- Forma oval do olho
+            if (x*x)/(4*4) + (y*y)/(3*3) <= 1 then
+                desenharPixel(xGlobal + x, yGlobal + y, colors.white)
+            end
+        end
+    end
+    
+    -- Desenhar íris (parte colorida)
+    for x = -2, 2 do
+        for y = -1, 1 do
+            if (x*x)/(2*2) + (y*y)/(1*1) <= 1 then
+                desenharPixel(xGlobal + x, yGlobal + y, colors.blue)
+            end
+        end
+    end
+    
+    -- Desenhar pupila
+    for x = -1, 1 do
+        for y = -1, 1 do
+            if math.abs(x) + math.abs(y) <= 1 then
+                desenharPixel(xGlobal + x, yGlobal + y, colors.black)
+            end
+        end
+    end
+    
+    -- Desenhar brilho no olho
+    desenharPixel(xGlobal - 1, yGlobal - 1, colors.white)
+    desenharPixel(xGlobal, yGlobal - 1, colors.white)
+end
+
+-- Desenhar olho alternativo (mais estilizado)
+function desenharOlhoEstilizado(xGlobal, yGlobal)
+    limparTodasTelas()
+    
+    -- Olho mais detalhado e realista
+    local function dentroElipse(x, y, rx, ry)
+        return (x*x)/(rx*rx) + (y*y)/(ry*ry) <= 1
+    end
+    
+    -- Branco do olho
+    for x = -5, 5 do
+        for y = -4, 4 do
+            if dentroElipse(x, y, 5, 4) then
+                desenharPixel(xGlobal + x, yGlobal + y, colors.white)
+            end
+        end
+    end
+    
+    -- Íris azul
+    for x = -3, 3 do
+        for y = -2, 2 do
+            if dentroElipse(x, y, 3, 2) then
+                desenharPixel(xGlobal + x, yGlobal + y, colors.blue)
+            end
+        end
+    end
+    
+    -- Pupila preta
+    for x = -2, 2 do
+        for y = -1, 1 do
+            if dentroElipse(x, y, 2, 1) then
+                desenharPixel(xGlobal + x, yGlobal + y, colors.black)
+            end
+        end
+    end
+    
+    -- Brilhos
+    desenharPixel(xGlobal - 2, yGlobal - 1, colors.lightBlue)
+    desenharPixel(xGlobal - 1, yGlobal - 2, colors.lightBlue)
+    desenharPixel(xGlobal + 1, yGlobal - 1, colors.white)
+end
+
+-- Movimento do olho pela tela gigante
+function movimentoCircular(t)
+    local centroX = larguraTotal / 2
+    local centroY = alturaTotal / 2
+    
+    -- Movimento circular com variação
+    local raio = math.min(centroX, centroY) - 6
+    local x = centroX + math.cos(t * 0.8) * raio * 0.8
+    local y = centroY + math.sin(t * 1.2) * raio * 0.6
+    
+    -- Adicionar tremor sutil
+    x = x + math.sin(t * 5) * 0.5
+    y = y + math.cos(t * 4) * 0.3
+    
+    return math.floor(x), math.floor(y)
+end
+
+function movimentoEspiral(t)
+    local centroX = larguraTotal / 2
+    local centroY = alturaTotal / 2
+    
+    -- Movimento em espiral
+    local raio = (t % 10) * 2
+    local x = centroX + math.cos(t) * raio
+    local y = centroY + math.sin(t * 1.5) * (raio * 0.7)
+    
+    return math.floor(x), math.floor(y)
+end
+
+function movimentoAleatorio(t)
+    -- Movimento pseudo-aleatório suave
+    local x = (math.sin(t * 0.3) * 0.5 + 0.5) * (larguraTotal - 10) + 5
+    local y = (math.cos(t * 0.4) * 0.5 + 0.5) * (alturaTotal - 8) + 4
+    
+    return math.floor(x), math.floor(y)
+end
+
+-- Animação principal
+function executarAnimacao()
+    local modosMovimento = {movimentoCircular, movimentoEspiral, movimentoAleatorio}
+    local modoAtual = 1
+    local ultimaTroca = os.time()
+    
+    print("Iniciando animação do Olho Gigante!")
+    print("Pressione Ctrl+T para parar")
+    
+    while true do
+        -- Trocar modo de movimento a cada 30 segundos
+        if os.time() - ultimaTroca > 30 then
+            modoAtual = (modoAtual % #modosMovimento) + 1
+            ultimaTroca = os.time()
+            print("Modo de movimento alterado: " .. modoAtual)
+        end
+        
+        -- Calcular posição do olho
+        local x, y = modosMovimento[modoAtual](tempo)
+        
+        -- Garantir que está dentro dos limites
+        x = math.max(6, math.min(larguraTotal - 5, x))
+        y = math.max(5, math.min(alturaTotal - 4, y))
+        
+        -- Desenhar olho (alternar entre os dois estilos)
+        if math.sin(tempo * 2) > 0 then
+            desenharOlho(x, y)
+        else
+            desenharOlhoEstilizado(x, y)
+        end
+        
+        -- Atualizar tempo e esperar
+        tempo = tempo + 0.15
+        os.sleep(0.2)  -- Velocidade da animação
+    end
+end
+
+-- Mostrar informações do sistema
+function mostrarInfo()
+    print("=== OLHO GIGANTE - SISTEMA ATIVO ===")
+    print("Monitores detectados: " .. #monitores)
+    print("Resolução total: " .. larguraTotal .. "x" .. alturaTotal)
+    print("")
+    print("Modos de movimento:")
+    print("1. Circular suave")
+    print("2. Espiral expansiva") 
+    print("3. Aleatório natural")
+    print("")
+    print("Os modos alternam automaticamente a cada 30 segundos")
+    print("=====================================")
+end
+
+-- Programa principal
+local function main()
+    local numMonitores = descobrirMonitores()
+    
+    if numMonitores == 0 then
+        print("ERRO: Nenhum monitor encontrado!")
+        print("Conecte monitores aos lados deste computador")
+        print("Lados disponíveis: top, bottom, left, right, front, back")
+        return
+    end
+    
+    mostrarInfo()
+    executarAnimacao()
+end
+
+-- Executar com tratamento de erro
+local ok, err = pcall(main)
+if not ok then
+    print("ERRO: " .. err)
+    print("Reiniciando em 5 segundos...")
+    os.sleep(5)
+    os.reboot()
+end
