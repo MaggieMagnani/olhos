@@ -1,1 +1,303 @@
+-- =============================================
+-- OLHO GIGANTE ESCALÁVEL - 36+ TELAS
+-- =============================================
 
+print("=== INICIANDO OLHO GIGANTE ===")
+
+-- Pega TODAS as telas
+local telas = {peripheral.find("monitor")}
+if not telas[1] then telas = {telas} end
+
+print("Telas detectadas: " .. #telas)
+
+-- Configura todas as telas
+for i, tela in ipairs(telas) do
+    tela.setTextScale(0.5)
+    tela.setBackgroundColor(colors.black)
+    tela.clear()
+end
+
+-- Sistema do Olho GIGANTE
+local larguraTotal, alturaTotal = 0, 0
+local tempo = 0
+
+-- Organizar 36+ telas em grid otimizado
+function organizarTelas()
+    print("Organizando " .. #telas .. " telas...")
+    
+    local larguraTela, alturaTela = 8, 5  -- Tamanho com textScale 0.5
+    
+    -- Calcular grid para muitas telas
+    local telasPorLinha = math.ceil(math.sqrt(#telas))
+    local x, y = 1, 1
+    local maxAltura = 0
+    
+    for i, tela in ipairs(telas) do
+        tela.posX = x
+        tela.posY = y
+        tela.largura = larguraTela
+        tela.altura = alturaTela
+        
+        larguraTotal = math.max(larguraTotal, x + larguraTela - 1)
+        alturaTotal = math.max(alturaTotal, y + alturaTela - 1)
+        maxAltura = math.max(maxAltura, alturaTela)
+        
+        x = x + larguraTela + 1
+        
+        -- Quebra de linha
+        if i % telasPorLinha == 0 then
+            x = 1
+            y = y + maxAltura + 1
+            maxAltura = 0
+        end
+    end
+    
+    print("Tela gigante: " .. larguraTotal .. "x" .. alturaTotal)
+end
+
+-- Limpar TODAS as telas
+function limparTodasTelas()
+    for i, tela in ipairs(telas) do
+        tela.setBackgroundColor(colors.black)
+        tela.clear()
+    end
+end
+
+-- Desenhar pixel na tela gigante
+function desenharPixel(xGlobal, yGlobal, cor)
+    for i, tela in ipairs(telas) do
+        if xGlobal >= tela.posX and xGlobal < tela.posX + tela.largura and
+           yGlobal >= tela.posY and yGlobal < tela.posY + tela.altura then
+            
+            local xLocal = xGlobal - tela.posX + 1
+            local yLocal = yGlobal - tela.posY + 1
+            
+            tela.setBackgroundColor(cor)
+            tela.setCursorPos(xLocal, yLocal)
+            tela.write(" ")
+            return true
+        end
+    end
+    return false
+end
+
+-- OLHO GIGANTE - 15x9 pixels (enorme!)
+function desenharOlhoGigante(xGlobal, yGlobal)
+    limparTodasTelas()
+    
+    -- Olho GIGANTE - 15 de largura, 9 de altura
+    local larguraOlho, alturaOlho = 15, 9
+    
+    -- Branco do olho (formato oval gigante)
+    for x = -math.floor(larguraOlho/2), math.floor(larguraOlho/2) do
+        for y = -math.floor(alturaOlho/2), math.floor(alturaOlho/2) do
+            -- Fórmula de elipse para formato de olho
+            local elipse = (x*x)/(7.5*7.5) + (y*y)/(4.5*4.5)
+            if elipse <= 1 then
+                desenharPixel(xGlobal + x, yGlobal + y, colors.white)
+            end
+        end
+    end
+    
+    -- Íris GIGANTE - 9x5 pixels
+    for x = -4, 4 do
+        for y = -2, 2 do
+            local elipse = (x*x)/(4*4) + (y*y)/(2*2)
+            if elipse <= 1 then
+                desenharPixel(xGlobal + x, yGlobal + y, colors.blue)
+            end
+        end
+    end
+    
+    -- Pupila GIGANTE - 5x3 pixels
+    for x = -2, 2 do
+        for y = -1, 1 do
+            local elipse = (x*x)/(2*2) + (y*y)/(1*1)
+            if elipse <= 1 then
+                desenharPixel(xGlobal + x, yGlobal + y, colors.black)
+            end
+        end
+    end
+    
+    -- Brilhos GIGANTES
+    desenharPixel(xGlobal - 3, yGlobal - 2, colors.lightBlue)
+    desenharPixel(xGlobal - 2, yGlobal - 3, colors.lightBlue)
+    desenharPixel(xGlobal + 2, yGlobal - 2, colors.white)
+    desenharPixel(xGlobal + 1, yGlobal - 3, colors.white)
+end
+
+-- OLHO MEGA GIGANTE - 21x13 pixels (COLOSSAL!)
+function desenharOlhoMegaGigante(xGlobal, yGlobal)
+    limparTodasTelas()
+    
+    -- Olho COLOSSAL - 21 de largura, 13 de altura
+    local larguraOlho, alturaOlho = 21, 13
+    
+    -- Branco do olho
+    for x = -math.floor(larguraOlho/2), math.floor(larguraOlho/2) do
+        for y = -math.floor(alturaOlho/2), math.floor(alturaOlho/2) do
+            local elipse = (x*x)/(10.5*10.5) + (y*y)/(6.5*6.5)
+            if elipse <= 1 then
+                desenharPixel(xGlobal + x, yGlobal + y, colors.white)
+            end
+        end
+    end
+    
+    -- Íris COLOSSAL - 13x7 pixels
+    for x = -6, 6 do
+        for y = -3, 3 do
+            local elipse = (x*x)/(6*6) + (y*y)/(3*3)
+            if elipse <= 1 then
+                desenharPixel(xGlobal + x, yGlobal + y, colors.blue)
+            end
+        end
+    end
+    
+    -- Pupila COLOSSAL - 7x4 pixels
+    for x = -3, 3 do
+        for y = -2, 2 do
+            local elipse = (x*x)/(3*3) + (y*y)/(2*2)
+            if elipse <= 1 then
+                desenharPixel(xGlobal + x, yGlobal + y, colors.black)
+            end
+        end
+    end
+    
+    -- Brilhos COLOSSAIS
+    desenharPixel(xGlobal - 4, yGlobal - 3, colors.lightBlue)
+    desenharPixel(xGlobal - 3, yGlobal - 4, colors.lightBlue)
+    desenharPixel(xGlobal + 3, yGlobal - 3, colors.white)
+    desenharPixel(xGlobal + 2, yGlobal - 4, colors.white)
+    desenharPixel(xGlobal - 2, yGlobal - 2, colors.lightGray)
+end
+
+-- Movimento para olho GIGANTE
+function movimentoCircularGigante(t)
+    local centroX = larguraTotal / 2
+    local centroY = alturaTotal / 2
+    
+    local raio = math.min(centroX, centroY) - 10  -- Raio maior para olho gigante
+    local x = centroX + math.cos(t * 0.6) * raio * 0.7
+    local y = centroY + math.sin(t * 1.1) * raio * 0.5
+    
+    -- Movimento mais suave para olho grande
+    x = x + math.sin(t * 3) * 0.8
+    y = y + math.cos(t * 2.5) * 0.5
+    
+    return math.floor(x), math.floor(y)
+end
+
+function movimentoEspiralGigante(t)
+    local centroX = larguraTotal / 2
+    local centroY = alturaTotal / 2
+    
+    local raio = (t % 20) * 2  -- Espiral mais lenta
+    local x = centroX + math.cos(t * 0.8) * raio
+    local y = centroY + math.sin(t * 1.3) * (raio * 0.6)
+    
+    return math.floor(x), math.floor(y)
+end
+
+function movimentoVarredura(t)
+    -- Varredura horizontal gigante
+    local x = (t * 1.5) % (larguraTotal - 20) + 10
+    local y = alturaTotal / 2 + math.sin(t * 2) * (alturaTotal / 4 - 6)
+    
+    return math.floor(x), math.floor(y)
+end
+
+function movimentoDiagonal(t)
+    -- Movimento diagonal pela tela toda
+    local progresso = (t * 0.3) % 4
+    local x, y
+    
+    if progresso < 1 then
+        -- Canto superior esquerdo → superior direito
+        x = 10 + (larguraTotal - 20) * (progresso / 1)
+        y = 7
+    elseif progresso < 2 then
+        -- Superior direito → inferior direito
+        x = larguraTotal - 10
+        y = 7 + (alturaTotal - 14) * ((progresso - 1) / 1)
+    elseif progresso < 3 then
+        -- Inferior direito → inferior esquerdo
+        x = larguraTotal - 10 - (larguraTotal - 20) * ((progresso - 2) / 1)
+        y = alturaTotal - 7
+    else
+        -- Inferior esquerdo → superior esquerdo
+        x = 10
+        y = alturaTotal - 7 - (alturaTotal - 14) * ((progresso - 3) / 1)
+    end
+    
+    return math.floor(x), math.floor(y)
+end
+
+-- Animação principal
+function executarAnimacao()
+    local modosMovimento = {
+        movimentoCircularGigante,
+        movimentoEspiralGigante,
+        movimentoVarredura,
+        movimentoDiagonal
+    }
+    
+    local nomesModos = {
+        "Circular Suave",
+        "Espiral Expansiva", 
+        "Varredura Horizontal",
+        "Varredura Diagonal"
+    }
+    
+    local modoAtual = 1
+    local ultimaTroca = os.time()
+    
+    print("\n=== OLHO GIGANTE ATIVADO ===")
+    print("36+ Telas detectadas!")
+    print("Olho: 21x13 pixels (COLOSSAL)")
+    print("Pressione Ctrl+T para parar")
+    print("============================\n")
+    
+    while true do
+        -- Trocar modo a cada 30 segundos
+        if os.time() - ultimaTroca > 30 then
+            modoAtual = (modoAtual % #modosMovimento) + 1
+            ultimaTroca = os.time()
+            print("Modo: " .. nomesModos[modoAtual])
+        end
+        
+        -- Calcular posição
+        local x, y = modosMovimento[modoAtual](tempo)
+        
+        -- Limites seguros para olho GIGANTE
+        x = math.max(11, math.min(larguraTotal - 10, x))
+        y = math.max(7, math.min(alturaTotal - 6, y))
+        
+        -- Alternar entre olho GIGANTE e MEGA GIGANTE
+        if math.sin(tempo * 1.5) > 0 then
+            desenharOlhoGigante(x, y)
+        else
+            desenharOlhoMegaGigante(x, y)
+        end
+        
+        tempo = tempo + 0.1
+        os.sleep(0.15)
+    end
+end
+
+-- Mostrar informações
+function mostrarInfo()
+    print("\n=== CONFIGURAÇÃO OLHO GIGANTE ===")
+    print("Telas: " .. #telas .. " (suporta +)")
+    print("Resolução: " .. larguraTotal .. "x" .. alturaTotal)
+    print("Tamanho do Olho: 15x9 a 21x13 pixels")
+    print("===================================")
+end
+
+-- Programa principal
+if #telas == 0 then
+    print("ERRO: Nenhuma tela detectada!")
+else
+    organizarTelas()
+    mostrarInfo()
+    executarAnimacao()
+end
